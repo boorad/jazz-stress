@@ -1,117 +1,162 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect} from 'react';
 import {
+  FlatList,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
+  TouchableOpacity,
   View,
 } from 'react-native';
-
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+  runBenchmarks,
+  cleanResults,
+  formatNumber,
+  calculateTimes,
+} from './src/benchmarks';
+import type {Results} from './src/benchmarks';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [results, setResults] = React.useState<Results[]>([]);
+  useEffect(() => {
+    // runBenchmarks().then(setResults);
+  }, []);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const renderBenchmark = ({item}: {item: Results}) => {
+    const {name, pure, rnqc} = item;
+    const p = cleanResults(name, pure);
+    const r = cleanResults(name, rnqc);
+
+    if (!name) {
+      return null;
+    }
+
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionTitle}>{name}</Text>
+          <Text style={[styles.text, styles.value]}>latency</Text>
+          <Text style={[styles.text, styles.value]}>throughput</Text>
+        </View>
+        <View style={styles.resultsContainer}>
+          <Text style={[styles.text, styles.label]}>PureJSCrypto</Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(p.latency?.mean || 0, 2, 'ms')}
+          </Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(p.throughput?.mean || 0, 2, 'ops/s')}
+          </Text>
+        </View>
+        <View style={styles.resultsContainer}>
+          <Text style={[styles.text, styles.label]}>RNQuickCrypto</Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(r.latency?.mean || 0, 2, 'ms')}
+          </Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(r.throughput?.mean || 0, 2, 'ops/s')}
+          </Text>
+        </View>
+        <View style={styles.resultsContainer}>
+          <Text style={[styles.text, styles.label]}>&nbsp;</Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(
+              calculateTimes(r.latency?.mean || 0, p.latency?.mean || 0),
+              2,
+              'x',
+            )}
+          </Text>
+          <Text style={[styles.text, styles.value]}>
+            {formatNumber(
+              calculateTimes(r.throughput?.mean || 0, p.throughput?.mean || 0),
+              2,
+              'x',
+            )}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Jazz Stress Tests</Text>
+      <View style={styles.sectionContainer}>
+        <FlatList
+          data={results}
+          renderItem={renderBenchmark}
+          style={styles.list}
+        />
+      </View>
+      <TouchableOpacity
+        onPress={() => runBenchmarks().then(setResults)}
+        style={styles.runButton}>
+        <Text style={styles.buttonText}>Run Benchmarks</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#333',
   },
-  sectionTitle: {
+  title: {
     fontSize: 24,
     fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
   },
-  sectionDescription: {
-    marginTop: 8,
+  list: {},
+  sectionContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flex: 1,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 3,
+  },
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: '600',
+    color: '#fff',
+    minWidth: 160,
+    paddingVertical: 2,
   },
-  highlight: {
-    fontWeight: '700',
+  resultsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 3,
+    paddingVertical: 4,
+  },
+  text: {
+    color: '#fff',
+  },
+  label: {
+    fontFamily: 'Courier New',
+    textAlign: 'left',
+    minWidth: 160,
+  },
+  value: {
+    fontFamily: 'Courier New',
+    minWidth: 60,
+    textAlign: 'right',
+    alignSelf: 'flex-end',
+  },
+  runButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+    padding: 10,
+    marginHorizontal: 10,
+    width: '80%',
+    alignSelf: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 
