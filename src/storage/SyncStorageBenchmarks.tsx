@@ -3,10 +3,8 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity }
 import { useBenchmark } from '../benchmarks/BenchmarkContext';
 import { BenchmarkComponent } from '../benchmarks/BenchmarkComponent';
 import { formatNumber } from '../benchmarks/utils';
-import { runStorageBenchmarks, runSingleBenchmark, benchmarkMap } from './benchmarks';
+import { runSyncBenchmarks, runSingleSyncBenchmark, benchmarkMap } from './sync-benches';
 import { Bench } from 'tinybench';
-
-// We'll use a more dynamic approach to access the benchmark results
 
 // Define the result type for our benchmarks
 interface BenchmarkResult {
@@ -15,21 +13,27 @@ interface BenchmarkResult {
   throughput: { mean: number };
 }
 
-export function StorageBenchmarks() {
+function SyncStorageBenchmarks() {
   const [results, setResults] = useState<BenchmarkResult[]>([]);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null);
-  const { runId, setBenchmarkComplete, shouldRunBenchmark } = useBenchmark();
+  const { runId, setBenchmarkComplete, registerBenchmark, unregisterBenchmark, shouldRunBenchmark } = useBenchmark();
+
+  // Register this benchmark component when mounted
+  useEffect(() => {
+    registerBenchmark('sync-storage', 'Sync Storage Benchmarks');
+    return () => unregisterBenchmark('sync-storage');
+  }, [registerBenchmark, unregisterBenchmark]);
 
   useEffect(() => {
     // Only run if this benchmark component should run
-    if (runId > 0 && shouldRunBenchmark('storage')) {
+    if (runId > 0 && shouldRunBenchmark('sync-storage')) {
       // Reset results when a new benchmark run is triggered
       setResults([]);
 
       // Check if we're running a specific benchmark or all benchmarks
       const benchmarkPromise = selectedBenchmark
-        ? runSingleBenchmark(selectedBenchmark)
-        : runStorageBenchmarks();
+        ? runSingleSyncBenchmark(selectedBenchmark)
+        : runSyncBenchmarks();
 
       // Run the benchmarks and update the results
       benchmarkPromise.then((benchResults) => {
@@ -68,7 +72,7 @@ export function StorageBenchmarks() {
         });
 
         setResults(formattedResults);
-        setBenchmarkComplete('storage', true);
+        setBenchmarkComplete('sync-storage', true);
         setSelectedBenchmark(null); // Reset selected benchmark after run
       });
     }
@@ -85,7 +89,7 @@ export function StorageBenchmarks() {
     const {name, latency, throughput} = item;
 
     // Extract a cleaner name from the benchmark name
-    const cleanName = name.replace('covalue-', '').replace(/-/g, ' ');
+    const cleanName = name.replace('sqlite-sync-', '').replace(/-/g, ' ');
 
     return (
       <View style={styles.resultsContainer}>
@@ -101,7 +105,7 @@ export function StorageBenchmarks() {
   };
 
   return (
-    <BenchmarkComponent name="Storage (op-sqlite, async)" id="storage">
+    <BenchmarkComponent name="Storage (op-sqlite, sync)" id="sync-storage">
       {results.length > 0 && (
         <View style={styles.tableContainer}>
           {/* Table header */}
@@ -178,3 +182,5 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 });
+
+export { SyncStorageBenchmarks };

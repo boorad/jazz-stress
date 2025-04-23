@@ -4,14 +4,17 @@ import { useBenchmark } from './BenchmarkContext';
 
 interface BenchmarkComponentProps {
   name: string;
+  id?: string; // Optional ID, will use name if not provided
   children: React.ReactNode;
 }
 
 export const BenchmarkComponent: React.FC<BenchmarkComponentProps> = ({ 
   name, 
+  id: providedId,
   children 
 }) => {
-  const id = useId();
+  // Use provided ID or convert name to a valid ID (lowercase, no spaces)
+  const id = providedId || name.toLowerCase().replace(/\s+/g, '-');
   const { registerBenchmark, unregisterBenchmark, runSingleBenchmark } = useBenchmark();
 
   // Register this benchmark when the component mounts

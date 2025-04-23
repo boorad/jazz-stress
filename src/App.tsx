@@ -9,6 +9,8 @@ import {
 import { BenchmarkProvider, useBenchmark } from './benchmarks/BenchmarkContext';
 import { CryptoBenchmarks } from './crypto/CryptoBenchmarks';
 import { StorageBenchmarks } from './storage/StorageBenchmarks';
+import { CoValueBenchmarks } from './storage/CoValueBenchmarks';
+import { SyncStorageBenchmarks } from './storage/SyncStorageBenchmarks';
 
 // Button component that uses the benchmark context
 function RunButton() {
@@ -31,6 +33,8 @@ function AppContent(): React.JSX.Element {
       <ScrollView style={styles.scrollView}>
         <CryptoBenchmarks />
         <StorageBenchmarks />
+        <SyncStorageBenchmarks />
+        <CoValueBenchmarks />
       </ScrollView>
       <RunButton />
     </SafeAreaView>

@@ -9,10 +9,17 @@ import { runCryptoBenchmarks, runSingleBenchmark, benchmarkMap } from './benchma
 export function CryptoBenchmarks() {
   const [results, setResults] = useState<CryptoBenchmarkResult[]>([]);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null);
-  const { runId, setBenchmarkComplete } = useBenchmark();
+  const { runId, setBenchmarkComplete, registerBenchmark, unregisterBenchmark, shouldRunBenchmark } = useBenchmark();
+
+  // Register this benchmark component when mounted
+  useEffect(() => {
+    registerBenchmark('crypto', 'Crypto Benchmarks');
+    return () => unregisterBenchmark('crypto');
+  }, [registerBenchmark, unregisterBenchmark]);
 
   useEffect(() => {
-    if (runId > 0) {
+    // Only run if this benchmark component should run
+    if (runId > 0 && shouldRunBenchmark('crypto')) {
       // Reset results when a new benchmark run is triggered
       setResults([]);
 
@@ -28,7 +35,7 @@ export function CryptoBenchmarks() {
         setSelectedBenchmark(null); // Reset selected benchmark after run
       });
     }
-  }, [runId, setBenchmarkComplete, selectedBenchmark]);
+  }, [runId, setBenchmarkComplete, selectedBenchmark, shouldRunBenchmark]);
 
   // Function to run a specific benchmark
   const runBenchmark = (benchmarkKey: string) => {
@@ -106,7 +113,7 @@ export function CryptoBenchmarks() {
   };
 
   return (
-    <BenchmarkComponent name="Crypto Benchmarks">
+    <BenchmarkComponent name="Crypto Benchmarks" id="crypto">
       <FlatList
         data={results}
         renderItem={renderBenchmark}
