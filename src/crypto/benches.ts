@@ -1,5 +1,5 @@
-import {PureJSCrypto} from 'cojson/native';
-import {RNQuickCrypto} from 'jazz-react-native';
+import {PureJSCrypto} from 'cojson/crypto/PureJSCrypto';
+import {RNQuickCrypto} from 'jazz-react-native-core/crypto';
 import {Bench} from 'tinybench';
 
 const TIME_MS = 1000;
@@ -7,7 +7,7 @@ const WARMUP_MS = 100;
 
 const data = {b: 'world', a: 'hello'};
 
-const sign_verify = async () => {
+export const sign_verify = async () => {
   const pure = new PureJSCrypto();
   const pureSigner = pure.newRandomSigner();
 

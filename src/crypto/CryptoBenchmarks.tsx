@@ -1,27 +1,43 @@
-import React, {useEffect} from 'react';
-import {
-  FlatList,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  runBenchmarks,
-  cleanResults,
-  formatNumber,
-  calculateTimes,
-} from './src/benchmarks';
-import type {Results} from './src/benchmarks';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { useBenchmark } from '../benchmarks/BenchmarkContext';
+import { BenchmarkComponent } from '../benchmarks/BenchmarkComponent';
+import { CryptoBenchmarkResult } from '../benchmarks/types';
+import { calculateTimes, cleanResults, formatNumber } from '../benchmarks/utils';
+import { runCryptoBenchmarks, runSingleBenchmark, benchmarkMap } from './benchmarks';
 
-function App(): React.JSX.Element {
-  const [results, setResults] = React.useState<Results[]>([]);
+export function CryptoBenchmarks() {
+  const [results, setResults] = useState<CryptoBenchmarkResult[]>([]);
+  const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null);
+  const { runId, setBenchmarkComplete } = useBenchmark();
+
   useEffect(() => {
-    // runBenchmarks().then(setResults);
-  }, []);
+    if (runId > 0) {
+      // Reset results when a new benchmark run is triggered
+      setResults([]);
 
-  const renderBenchmark = ({item}: {item: Results}) => {
+      // Check if we're running a specific benchmark or all benchmarks
+      const benchmarkPromise = selectedBenchmark 
+        ? runSingleBenchmark(selectedBenchmark)
+        : runCryptoBenchmarks();
+
+      // Run the benchmarks and update the results
+      benchmarkPromise.then((newResults) => {
+        setResults(newResults);
+        setBenchmarkComplete('crypto', true);
+        setSelectedBenchmark(null); // Reset selected benchmark after run
+      });
+    }
+  }, [runId, setBenchmarkComplete, selectedBenchmark]);
+
+  // Function to run a specific benchmark
+  const runBenchmark = (benchmarkKey: string) => {
+    setSelectedBenchmark(benchmarkKey);
+    // The useEffect will handle running the benchmark when runId changes
+    // We'll use the BenchmarkComponent's re-run button to trigger this
+  };
+
+  const renderBenchmark = ({item}: {item: CryptoBenchmarkResult}) => {
     const {name, pure, rnqc} = item;
     const p = cleanResults(name, pure);
     const r = cleanResults(name, rnqc);
@@ -29,6 +45,9 @@ function App(): React.JSX.Element {
     if (!name) {
       return null;
     }
+    
+    // Extract the benchmark key from the name
+    const benchmarkKey = name.replace(/\//g, '-').toLowerCase();
 
     return (
       <View style={styles.sectionContainer}>
@@ -72,45 +91,40 @@ function App(): React.JSX.Element {
             )}
           </Text>
         </View>
+        <TouchableOpacity 
+          style={styles.runButton}
+          onPress={() => runBenchmark(benchmarkKey)}
+        >
+          <Text style={styles.runButtonText}>Run this benchmark</Text>
+        </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Jazz Stress Tests</Text>
-      <View style={styles.sectionContainer}>
-        <FlatList
-          data={results}
-          renderItem={renderBenchmark}
-          style={styles.list}
-        />
-      </View>
-      <TouchableOpacity
-        onPress={() => runBenchmarks().then(setResults)}
-        style={styles.runButton}>
-        <Text style={styles.buttonText}>Run Benchmarks</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+    <BenchmarkComponent name="Crypto Benchmarks">
+      <FlatList
+        data={results}
+        renderItem={renderBenchmark}
+        style={styles.list}
+        ListEmptyComponent={
+          runId > 0 ? (
+            <ActivityIndicator />
+          ) : null
+        }
+      />
+    </BenchmarkComponent>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#333',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-  },
-  list: {},
   sectionContainer: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     flex: 1,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
   },
   sectionTitleContainer: {
     flexDirection: 'row',
@@ -130,6 +144,7 @@ const styles = StyleSheet.create({
     flex: 3,
     paddingVertical: 4,
   },
+  list: {},
   text: {
     color: '#fff',
   },
@@ -146,18 +161,15 @@ const styles = StyleSheet.create({
   },
   runButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 6,
-    padding: 10,
-    marginHorizontal: 10,
-    width: '80%',
-    alignSelf: 'center',
+    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginTop: 8,
+    alignSelf: 'flex-end',
   },
-  buttonText: {
+  runButtonText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-    textAlign: 'center',
+    fontWeight: '500',
+    fontSize: 14,
   },
 });
-
-export default App;
