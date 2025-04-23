@@ -17,7 +17,7 @@ export function CryptoBenchmarks() {
       setResults([]);
 
       // Check if we're running a specific benchmark or all benchmarks
-      const benchmarkPromise = selectedBenchmark 
+      const benchmarkPromise = selectedBenchmark
         ? runSingleBenchmark(selectedBenchmark)
         : runCryptoBenchmarks();
 
@@ -45,37 +45,45 @@ export function CryptoBenchmarks() {
     if (!name) {
       return null;
     }
-    
+
     // Extract the benchmark key from the name
     const benchmarkKey = name.replace(/\//g, '-').toLowerCase();
 
     return (
       <View style={styles.sectionContainer}>
-        <View style={styles.sectionTitleContainer}>
+        {/* Benchmark title on its own row */}
+        <View style={styles.titleRow}>
           <Text style={styles.sectionTitle}>{name}</Text>
-          <Text style={[styles.text, styles.value]}>latency</Text>
-          <Text style={[styles.text, styles.value]}>throughput</Text>
         </View>
+
+        {/* Headers row with more space */}
+        <View style={styles.headerRow}>
+          <Text style={[styles.text, styles.label]}>Implementation</Text>
+          <Text style={[styles.text, styles.headerValue]}>ms</Text>
+          <Text style={[styles.text, styles.headerValue]}>ops/s</Text>
+        </View>
+
+        {/* Results rows */}
         <View style={styles.resultsContainer}>
           <Text style={[styles.text, styles.label]}>PureJSCrypto</Text>
           <Text style={[styles.text, styles.value]}>
-            {formatNumber(p.latency?.mean || 0, 2, 'ms')}
+            {formatNumber(p.latency?.mean || 0, 2, '')}
           </Text>
           <Text style={[styles.text, styles.value]}>
-            {formatNumber(p.throughput?.mean || 0, 2, 'ops/s')}
+            {formatNumber(p.throughput?.mean || 0, 2, '')}
           </Text>
         </View>
         <View style={styles.resultsContainer}>
           <Text style={[styles.text, styles.label]}>RNQuickCrypto</Text>
           <Text style={[styles.text, styles.value]}>
-            {formatNumber(r.latency?.mean || 0, 2, 'ms')}
+            {formatNumber(r.latency?.mean || 0, 2, '')}
           </Text>
           <Text style={[styles.text, styles.value]}>
-            {formatNumber(r.throughput?.mean || 0, 2, 'ops/s')}
+            {formatNumber(r.throughput?.mean || 0, 2, '')}
           </Text>
         </View>
         <View style={styles.resultsContainer}>
-          <Text style={[styles.text, styles.label]}>&nbsp;</Text>
+          <Text style={[styles.text, styles.label]}>Improvement</Text>
           <Text style={[styles.text, styles.value]}>
             {formatNumber(
               calculateTimes(r.latency?.mean || 0, p.latency?.mean || 0),
@@ -91,12 +99,8 @@ export function CryptoBenchmarks() {
             )}
           </Text>
         </View>
-        <TouchableOpacity 
-          style={styles.runButton}
-          onPress={() => runBenchmark(benchmarkKey)}
-        >
-          <Text style={styles.runButtonText}>Run this benchmark</Text>
-        </TouchableOpacity>
+
+
       </View>
     );
   };
@@ -126,6 +130,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#444',
   },
+  titleRow: {
+    marginBottom: 8,
+  },
   sectionTitleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -135,8 +142,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
-    minWidth: 160,
     paddingVertical: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#555',
+    marginBottom: 4,
+  },
+  headerValue: {
+    fontFamily: 'Courier New',
+    minWidth: 80,
+    textAlign: 'right',
+    alignSelf: 'flex-end',
+    fontSize: 14,
+    color: '#aaa',
   },
   resultsContainer: {
     flexDirection: 'row',
@@ -155,7 +177,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontFamily: 'Courier New',
-    minWidth: 60,
+    minWidth: 80,
     textAlign: 'right',
     alignSelf: 'flex-end',
   },

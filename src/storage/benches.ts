@@ -39,11 +39,12 @@ export const covalue_parallel_creation_benchmark = async () => {
     try {
       // Create 20 coValues in parallel - this should be enough to potentially trigger locking issues
       const promises = [];
+      const timestamp = Date.now();
       for (let i = 0; i < 20; i++) {
-        const id = `covalue_${i}_${Date.now()}`;
+        const id = `covalue_${i}_${timestamp}`;
         const header = JSON.stringify({
           type: 'comap',
-          meta: { createdAt: Date.now() }
+          meta: { createdAt: timestamp, id: `${id}_${i}` } // Ensure unique header by adding unique id
         });
         
         promises.push(
@@ -90,10 +91,11 @@ export const covalue_sequential_creation_benchmark = async () => {
   bench.add('sqlite', async () => {
     try {
       // Create a single coValue
-      const id = `covalue_seq_${counter}_${Date.now()}`;
+      const timestamp = Date.now();
+      const id = `covalue_seq_${counter}_${timestamp}`;
       const header = JSON.stringify({
         type: 'comap',
-        meta: { createdAt: Date.now() }
+        meta: { createdAt: timestamp, id: `${id}_${counter}` } // Ensure unique header
       });
       counter++;
       
@@ -115,10 +117,11 @@ export const covalue_sessions_benchmark = async () => {
   const sqliteAdapter = await setupSQLiteAdapter();
   
   // Create a base coValue first
-  const baseId = `base_covalue_${Date.now()}`;
+  const timestamp = Date.now();
+  const baseId = `base_covalue_${timestamp}`;
   const baseHeader = JSON.stringify({
     type: 'comap',
-    meta: { createdAt: Date.now() }
+    meta: { createdAt: timestamp, id: baseId } // Ensure unique header
   });
   
   const result = await sqliteAdapter.execute(
@@ -164,12 +167,14 @@ export const covalue_complex_header_benchmark = async () => {
   
   bench.add('sqlite', async () => {
     // Create a complex header structure
+    const timestamp = Date.now();
     const complexData: Record<string, any> = {
       type: 'comap',
       meta: {
-        createdAt: Date.now(),
+        createdAt: timestamp,
         version: '1.0.0',
         author: 'benchmark',
+        id: `complex_${counter}_${timestamp}`, // Ensure unique header
         properties: {}
       }
     };
@@ -208,11 +213,12 @@ export const covalue_database_lock_benchmark = async () => {
     const operations = [];
     
     // Create 50 coValues in parallel - this should be enough to trigger locking issues
+    const timestamp = Date.now();
     for (let i = 0; i < 50; i++) {
-      const id = `lock_test_${i}_${Date.now()}`;
+      const id = `lock_test_${i}_${timestamp}`;
       const header = JSON.stringify({
         type: 'comap',
-        meta: { createdAt: Date.now(), index: i }
+        meta: { createdAt: timestamp, index: i, id: `${id}_${i}` } // Ensure unique header
       });
       
       operations.push(
@@ -235,10 +241,11 @@ export const covalue_transaction_session_benchmark = async () => {
   const sqliteAdapter = await setupSQLiteAdapter();
   
   // Create a base coValue first
-  const baseId = `transaction_base_${Date.now()}`;
+  const timestamp = Date.now();
+  const baseId = `transaction_base_${timestamp}`;
   const baseHeader = JSON.stringify({
     type: 'comap',
-    meta: { createdAt: Date.now() }
+    meta: { createdAt: timestamp, id: baseId } // Ensure unique header
   });
   
   const result = await sqliteAdapter.execute(
@@ -286,11 +293,12 @@ export const covalue_transaction_session_benchmark = async () => {
     }
     
     // Create new coValues at the same time
+    const timestamp = Date.now();
     for (let i = 0; i < 5; i++) {
-      const id = `new_covalue_${counter}_${i}_${Date.now()}`;
+      const id = `new_covalue_${counter}_${i}_${timestamp}`;
       const header = JSON.stringify({
         type: 'comap',
-        meta: { createdAt: Date.now() }
+        meta: { createdAt: timestamp, id: `${id}_${i}` } // Ensure unique header
       });
       
       operations.push(

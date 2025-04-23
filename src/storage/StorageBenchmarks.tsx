@@ -26,7 +26,7 @@ export function StorageBenchmarks() {
       setResults([]);
 
       // Check if we're running a specific benchmark or all benchmarks
-      const benchmarkPromise = selectedBenchmark 
+      const benchmarkPromise = selectedBenchmark
         ? runSingleBenchmark(selectedBenchmark)
         : runStorageBenchmarks();
 
@@ -40,11 +40,11 @@ export function StorageBenchmarks() {
 
           // Access the result object dynamically to avoid TypeScript errors
           const rawResult = task?.result as any;
-          
+
           // Extract latency and throughput values
           let latencyMean = 0;
           let throughputMean = 0;
-          
+
           if (rawResult) {
             // Try to get latency from stats.mean or directly from mean
             if (rawResult.stats && typeof rawResult.stats.mean === 'number') {
@@ -52,13 +52,13 @@ export function StorageBenchmarks() {
             } else if (typeof rawResult.mean === 'number') {
               latencyMean = rawResult.mean;
             }
-            
+
             // Try to get throughput from hz
             if (typeof rawResult.hz === 'number') {
               throughputMean = rawResult.hz;
             }
           }
-          
+
           return {
             name,
             latency: { mean: latencyMean },
@@ -82,82 +82,84 @@ export function StorageBenchmarks() {
 
   const renderBenchmark = ({item}: {item: BenchmarkResult}) => {
     const {name, latency, throughput} = item;
-    
-    // Extract the benchmark key from the name (e.g., 'covalue-parallel-creation' -> 'parallel-creation')
-    const benchmarkKey = name.replace('covalue-', '');
-    
+
+    // Extract a cleaner name from the benchmark name
+    const cleanName = name.replace('covalue-', '').replace(/-/g, ' ');
+
     return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionTitle}>{name}</Text>
-          <Text style={[styles.text, styles.value]}>latency</Text>
-          <Text style={[styles.text, styles.value]}>throughput</Text>
-        </View>
-        <View style={styles.resultsContainer}>
-          <Text style={[styles.text, styles.label]}>SQLite Operations</Text>
-          <Text style={[styles.text, styles.value]}>
-            {formatNumber(latency?.mean || 0, 2, 'ms')}
-          </Text>
-          <Text style={[styles.text, styles.value]}>
-            {formatNumber(throughput?.mean || 0, 2, 'ops/s')}
-          </Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.runButton}
-          onPress={() => runBenchmark(benchmarkKey)}
-        >
-          <Text style={styles.runButtonText}>Run this benchmark</Text>
-        </TouchableOpacity>
+      <View style={styles.resultsContainer}>
+        <Text style={[styles.text, styles.label]}>{cleanName}</Text>
+        <Text style={[styles.text, styles.value]}>
+          {formatNumber(latency?.mean || 0, 2, '')}
+        </Text>
+        <Text style={[styles.text, styles.value]}>
+          {formatNumber(throughput?.mean || 0, 2, '')}
+        </Text>
       </View>
     );
   };
 
   return (
-    <BenchmarkComponent name="Storage Benchmarks">
-      <FlatList
-        data={results}
-        renderItem={renderBenchmark}
-        style={styles.list}
-        ListEmptyComponent={
-          runId > 0 ? (
-            <ActivityIndicator />
-          ) : (
-            null
-          )
-        }
-      />
+    <BenchmarkComponent name="Storage (op-sqlite, async)">
+      {results.length > 0 && (
+        <View style={styles.tableContainer}>
+          {/* Table header */}
+          <View style={styles.headerRow}>
+            <Text style={[styles.text, styles.label]}>Benchmark</Text>
+            <Text style={[styles.text, styles.headerValue]}>ms</Text>
+            <Text style={[styles.text, styles.headerValue]}>ops/s</Text>
+          </View>
+
+          {/* Table rows */}
+          <FlatList
+            data={results}
+            renderItem={renderBenchmark}
+            style={styles.list}
+          />
+        </View>
+      )}
+
+      {results.length === 0 && (
+        <Text style={styles.text}>
+          {runId > 0 ? 'Running Storage Benchmarks...' : 'Storage Benchmarks'}
+        </Text>
+      )}
     </BenchmarkComponent>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
+  tableContainer: {
+    flex: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    flex: 1,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#444',
   },
-  sectionTitleContainer: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    flex: 3,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#555',
+    marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    minWidth: 160,
-    paddingVertical: 2,
+  headerValue: {
+    fontFamily: 'Courier New',
+    minWidth: 80,
+    textAlign: 'right',
+    alignSelf: 'flex-end',
+    fontSize: 14,
+    color: '#aaa',
   },
   resultsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    flex: 3,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
   },
-  list: {},
+  list: {
+    flex: 1,
+  },
   text: {
     color: '#fff',
   },
@@ -165,24 +167,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier New',
     textAlign: 'left',
     minWidth: 160,
+    color: '#fff',
   },
   value: {
     fontFamily: 'Courier New',
-    minWidth: 60,
+    minWidth: 80,
     textAlign: 'right',
     alignSelf: 'flex-end',
-  },
-  runButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginTop: 8,
-    alignSelf: 'flex-end',
-  },
-  runButtonText: {
     color: '#fff',
-    fontWeight: '500',
-    fontSize: 14,
   },
 });
