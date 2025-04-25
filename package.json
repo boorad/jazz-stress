@@ -16,10 +16,12 @@
     "@op-engineering/op-sqlite": "11.4.8",
     "@react-native-community/netinfo": "11.4.1",
     "buffer": "6.0.3",
-    "cojson": "0.13.7",
+    "cojson": "workspace:*",
     "event-target-polyfill": "0.0.4",
-    "jazz-react-native": "0.13.9",
-    "jazz-tools": "^0.13.9",
+    "jazz-react-core": "workspace:*",
+    "jazz-react-native": "workspace:*",
+    "jazz-react-native-core": "workspace:*",
+    "jazz-tools": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.76.7",
     "react-native-get-random-values": "1.11.0",
@@ -54,7 +56,12 @@
     "node": ">=18"
   },
   "workspaces": [
-    "."
+    ".",
+    ".yalc/cojson",
+    ".yalc/jazz-react-core",
+    ".yalc/jazz-react-native",
+    ".yalc/jazz-react-native-core",
+    ".yalc/jazz-tools"
   ],
   "trustedDependencies": [
     "@parcel/watcher",

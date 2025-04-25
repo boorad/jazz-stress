@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useBenchmark } from '../benchmarks/BenchmarkContext';
 import { BenchmarkComponent } from '../benchmarks/BenchmarkComponent';
 import { formatNumber } from '../benchmarks/utils';
-import { runStorageBenchmarks, runSingleBenchmark, benchmarkMap } from './benchmarks';
-import { Bench } from 'tinybench';
-
-// We'll use a more dynamic approach to access the benchmark results
+import { runStorageBenchmarks, runSingleBenchmark } from './benchmarks';
 
 // Define the result type for our benchmarks
 interface BenchmarkResult {
