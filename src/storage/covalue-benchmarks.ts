@@ -1,392 +1,235 @@
+import { RNQuickCrypto } from 'jazz-react-native-core/crypto';
 import { Bench } from 'tinybench';
-import { OPSQLiteAdapter } from 'jazz-react-native';
+import { OPSQLiteAdapter, SQLiteClient } from 'jazz-react-native';
+import { CoValueHeader, idforHeader } from 'cojson/dist/coValueCore.js';
+import { PermissionsDef } from 'cojson/dist/permissions.js';
 
-// Import types from cojson
-type CoMap = any;
-type Account = any;
-type LocalNode = any;
+// Reduced benchmark time for quicker feedback
+const TIME_MS = 1000; // 1 second
+const WARMUP_MS = 200; // 0.2 seconds
 
-// Increase benchmark time for more accurate results
-const TIME_MS = 5000;  // 5 seconds
-const WARMUP_MS = 500;  // 0.5 seconds
+// Mode controls sync or async SQLiteClient
+export type Mode = 'async' | 'sync';
 
 // Benchmarks for Jazz coValue operations
 const benches = [
   covalue_create_benchmark,
-  covalue_set_benchmark,
-  covalue_get_benchmark,
-  covalue_batch_operations_benchmark,
-  covalue_nested_map_benchmark
+  covalue_read_benchmark,
+  covalue_update_benchmark,
+  covalue_delete_benchmark,
 ];
 
 // Map benchmark names to functions
-export const benchmarkMap: Record<string, () => Promise<Bench>> = {
+export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
   'covalue-create': covalue_create_benchmark,
-  'covalue-set': covalue_set_benchmark,
-  'covalue-get': covalue_get_benchmark,
-  'covalue-batch-operations': covalue_batch_operations_benchmark,
-  'covalue-nested-map': covalue_nested_map_benchmark
+  'covalue-read': covalue_read_benchmark,
+  'covalue-update': covalue_update_benchmark,
+  'covalue-delete': covalue_delete_benchmark,
 };
 
 // Setup the Jazz environment with SQLite storage
-export const setupJazzEnvironment = async () => {
+export const setupJazzEnvironment = async (mode: Mode = 'async') => {
   // Initialize the SQLite adapter with a unique database name to avoid conflicts
   const dbName = `jazz-stress-benchmark-${Date.now()}.db`;
   const sqliteAdapter = new OPSQLiteAdapter(dbName);
-  await sqliteAdapter.initialize();
-  
+  const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
+  await sqliteClient.ensureInitialized();
+  const crypto = new RNQuickCrypto();
+
   // Mock the LocalNode and Account for benchmarking
   const localNode = {
     id: `node-${Date.now()}`,
     storage: {
-      execute: sqliteAdapter.execute.bind(sqliteAdapter),
-      transaction: sqliteAdapter.transaction.bind(sqliteAdapter),
-    }
+      execute: sqliteAdapter.executeSync.bind(sqliteAdapter),
+      transaction: sqliteAdapter.transactionSync.bind(sqliteAdapter),
+    },
   };
-  
+
   // Mock account
   const account = {
     id: `account-${Date.now()}`,
-    profile: { name: `Benchmark User ${Date.now()}` }
+    profile: { name: `Benchmark User ${Date.now()}` },
   };
-  
-  return { localNode, account, sqliteAdapter };
+
+  return { localNode, account, sqliteAdapter, sqliteClient, crypto };
 };
 
 // Benchmark for creating coValues
-async function covalue_create_benchmark() {
-  const { account, sqliteAdapter } = await setupJazzEnvironment();
-  
+async function covalue_create_benchmark(mode: Mode = 'async') {
+  const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
+
   const bench = new Bench({
     name: 'covalue-create',
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
-  
-  bench.add('create-comap', async () => {
-    // Simulate creating a CoMap with unique data
-    const timestamp = Date.now();
-    const uniqueId = `${timestamp}-${Math.random().toString(36).substring(2, 10)}`;
-    
-    // Insert directly into SQLite to simulate CoMap creation
-    const header = JSON.stringify({
-      type: 'comap',
-      meta: { createdAt: timestamp, id: uniqueId }
-    });
-    
-    await sqliteAdapter.execute(
-      'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-      [`comap-${uniqueId}`, header]
-    );
-  });
-  
-  return bench;
-}
 
-// Benchmark for setting values in a coValue
-async function covalue_set_benchmark() {
-  const { account, sqliteAdapter } = await setupJazzEnvironment();
-  
-  // Create a unique ID for this benchmark run
-  const mapId = `comap-${Date.now()}`;
-  
-  // Insert the initial map into SQLite
-  const header = JSON.stringify({
-    type: 'comap',
-    meta: { createdAt: Date.now(), id: mapId }
-  });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-    [mapId, header]
-  );
-  
-  const bench = new Bench({
-    name: 'covalue-set',
-    time: TIME_MS,
-    warmupTime: WARMUP_MS,
-  });
-  
-  let counter = 0;
-  
-  bench.add('set-value', async () => {
-    const uniqueKey = `key-${counter++}-${Date.now()}`;
-    const uniqueValue = `value-${Date.now()}-${Math.random()}`;
-    
-    // Simulate setting a value by creating a transaction
-    const tx = JSON.stringify({
-      op: 'set',
-      key: uniqueKey,
-      value: uniqueValue
+  let createCounter = 0; // ensure unique IDs for each addCoValue call
+
+  bench.add('create-comap', async () => {
+    // Build a unique header for this iteration
+    const header: CoValueHeader = {
+      type: 'comap',
+      ruleset: {} as PermissionsDef,
+      meta: null,
+      uniqueness: createCounter++,
+    };
+
+    const id = idforHeader(header, crypto);
+
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: 'content',
+      priority: 0,
+      new: {},
     });
-    
-    await sqliteAdapter.execute(
-      'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-      [1, counter, tx]
-    );
   });
-  
+
   return bench;
 }
 
 // Benchmark for getting values from a coValue
-async function covalue_get_benchmark() {
-  const { account, sqliteAdapter } = await setupJazzEnvironment();
-  
-  // Create a unique ID for this benchmark run
-  const mapId = `comap-get-${Date.now()}`;
-  
-  // Insert the initial map into SQLite
-  const header = JSON.stringify({
+async function covalue_read_benchmark(mode: Mode = 'async') {
+  const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
+
+  const header: CoValueHeader = {
     type: 'comap',
-    meta: { createdAt: Date.now(), id: mapId }
+    meta: { createdAt: Date.now() },
+    ruleset: {} as PermissionsDef,
+    uniqueness: null,
+  };
+  const id = idforHeader(header, crypto);
+
+  // Insert the initial map into SQLite
+  await sqliteClient.addCoValue({
+    id,
+    header,
+    action: 'content',
+    priority: 0,
+    new: {},
   });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-    [mapId, header]
-  );
-  
-  // Create a session for this map
-  const sessionId = `session-${Date.now()}`;
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO sessions (coValue, sessionID, lastIdx) VALUES (?, ?, ?)',
-    [1, sessionId, 100]
-  );
-  
-  // Add 100 entries to the CoMap as transactions
-  const keys: string[] = [];
-  for (let i = 0; i < 100; i++) {
-    const key = `benchmark-key-${i}`;
-    keys.push(key);
-    const tx = JSON.stringify({
-      op: 'set',
-      key: key,
-      value: `benchmark-value-${i}-${Date.now()}`
-    });
-    
-    await sqliteAdapter.execute(
-      'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-      [1, i, tx]
-    );
-  }
-  
+
   const bench = new Bench({
-    name: 'covalue-get',
+    name: 'covalue-read',
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
-  
-  bench.add('get-value', async () => {
-    // Get a random key from the CoMap by simulating a get operation
-    const randomIndex = Math.floor(Math.random() * keys.length);
-    const key = keys[randomIndex];
-    
-    // Simulate getting a value by reading the transaction
-    await sqliteAdapter.execute(
-      'SELECT tx FROM transactions WHERE ses = ? AND idx = ?',
-      [1, randomIndex]
-    );
+
+  bench.add('read-comap', async () => {
+    await sqliteClient.getCoValue(id);
   });
-  
+
   return bench;
 }
 
-// Benchmark for batch operations on a coValue
-async function covalue_batch_operations_benchmark() {
-  const { account, sqliteAdapter } = await setupJazzEnvironment();
-  
-  // Create a unique ID for this benchmark run
-  const mapId = `comap-batch-${Date.now()}`;
-  
-  // Insert the initial map into SQLite
-  const header = JSON.stringify({
+// Benchmark for updating CoValue headers
+async function covalue_update_benchmark(mode: Mode = 'async') {
+  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
+  // Insert base CoValue
+  const initialHeader: CoValueHeader = {
     type: 'comap',
-    meta: { createdAt: Date.now(), id: mapId }
+    ruleset: {} as PermissionsDef,
+    meta: null,
+    uniqueness: 0,
+  };
+  const id = idforHeader(initialHeader, crypto);
+  await sqliteClient.addCoValue({
+    id,
+    header: initialHeader,
+    action: 'content',
+    priority: 0,
+    new: {},
   });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-    [mapId, header]
-  );
-  
-  // Create a session for this map
-  const sessionId = `session-batch-${Date.now()}`;
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO sessions (coValue, sessionID, lastIdx) VALUES (?, ?, ?)',
-    [1, sessionId, 0]
-  );
-  
   const bench = new Bench({
-    name: 'covalue-batch-operations',
+    name: 'covalue-update',
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
-  
-  let batchCounter = 0;
-  
-  bench.add('batch-operations', async () => {
-    const batchId = `batch-${batchCounter++}-${Date.now()}`;
-    
-    // Perform a batch of operations (10 sets) using multiple statements
-    for (let i = 0; i < 10; i++) {
-      const key = `${batchId}-key-${i}`;
-      const value = `${batchId}-value-${i}-${Date.now()}`;
-      
-      const txData = JSON.stringify({
-        op: 'set',
-        key: key,
-        value: value
-      });
-      
-      await sqliteAdapter.execute(
-        'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-        [1, batchCounter * 10 + i, txData]
-      );
+  let counter = 1;
+  bench.add('update-header', async () => {
+    // Modify header meta
+    const newHeader: CoValueHeader = {
+      ...initialHeader,
+      meta: { updated: counter },
+      uniqueness: counter++,
+    };
+    if (mode === 'sync') {
+      sqliteAdapter.executeSync('UPDATE coValues SET header = ? WHERE id = ?', [JSON.stringify(newHeader), id]);
+    } else {
+      await sqliteAdapter.executeAsync('UPDATE coValues SET header = ? WHERE id = ?', [JSON.stringify(newHeader), id]);
     }
   });
-  
   return bench;
 }
 
-// Benchmark for nested map operations
-async function covalue_nested_map_benchmark() {
-  const { account, sqliteAdapter } = await setupJazzEnvironment();
-  
-  // Create parent and child map IDs
-  const parentMapId = `parent-map-${Date.now()}`;
-  const childMapId = `child-map-${Date.now()}`;
-  
-  // Insert the parent map into SQLite
-  const parentHeader = JSON.stringify({
-    type: 'comap',
-    meta: { createdAt: Date.now(), id: parentMapId }
-  });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-    [parentMapId, parentHeader]
-  );
-  
-  // Insert the child map into SQLite
-  const childHeader = JSON.stringify({
-    type: 'comap',
-    meta: { createdAt: Date.now(), id: childMapId }
-  });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO coValues (id, header) VALUES (?, ?)',
-    [childMapId, childHeader]
-  );
-  
-  // Create sessions for both maps
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO sessions (coValue, sessionID, lastIdx) VALUES (?, ?, ?)',
-    [1, `parent-session-${Date.now()}`, 1]
-  );
-  
-  await sqliteAdapter.execute(
-    'INSERT OR REPLACE INTO sessions (coValue, sessionID, lastIdx) VALUES (?, ?, ?)',
-    [2, `child-session-${Date.now()}`, 2]
-  );
-  
-  // Link the child map to the parent with a transaction
-  const linkTx = JSON.stringify({
-    op: 'set',
-    key: 'child',
-    value: childMapId
-  });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-    [1, 0, linkTx]
-  );
-  
-  // Add initial values to child map
-  const childTx1 = JSON.stringify({
-    op: 'set',
-    key: 'childKey1',
-    value: 'childValue1'
-  });
-  
-  const childTx2 = JSON.stringify({
-    op: 'set',
-    key: 'childKey2',
-    value: 'childValue2'
-  });
-  
-  await sqliteAdapter.execute(
-    'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-    [2, 0, childTx1]
-  );
-  
-  await sqliteAdapter.execute(
-    'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-    [2, 1, childTx2]
-  );
-  
+// Benchmark for deleting CoValue entries
+async function covalue_delete_benchmark(mode: Mode = 'async') {
+  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
   const bench = new Bench({
-    name: 'covalue-nested-map',
+    name: 'covalue-delete',
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
-  
-  let nestedCounter = 0;
-  
-  bench.add('nested-operations', async () => {
-    const uniqueId = `nested-${nestedCounter++}-${Date.now()}`;
-    
-    // Add a new key to the parent with a transaction
-    const parentTx = JSON.stringify({
-      op: 'set',
-      key: `parent-${uniqueId}`,
-      value: `parent-value-${uniqueId}`
+  let counter = 0;
+  bench.add('delete-comap', async () => {
+    const header: CoValueHeader = {
+      type: 'comap',
+      ruleset: {} as PermissionsDef,
+      meta: null,
+      uniqueness: counter,
+    };
+    const id = idforHeader(header, crypto);
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: 'content',
+      priority: 0,
+      new: {},
     });
-    
-    await sqliteAdapter.execute(
-      'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-      [1, nestedCounter * 2, parentTx]
-    );
-    
-    // Add a new key to the child with a transaction
-    const childTx = JSON.stringify({
-      op: 'set',
-      key: `child-${uniqueId}`,
-      value: `child-value-${uniqueId}`
-    });
-    
-    await sqliteAdapter.execute(
-      'INSERT OR IGNORE INTO transactions (ses, idx, tx) VALUES (?, ?, ?)',
-      [2, nestedCounter * 2 + 2, childTx]
-    );
+    if (mode === 'sync') {
+      sqliteAdapter.executeSync('DELETE FROM coValues WHERE id = ?', [id]);
+    } else {
+      await sqliteAdapter.executeAsync('DELETE FROM coValues WHERE id = ?', [id]);
+    }
+    counter++;
   });
-  
   return bench;
 }
 
 // Run all benchmarks and return the results
-export const runCoValueBenchmarks = async (): Promise<Bench[]> => {
-  const benchmarks = [];
-  
-  // Run each benchmark and collect the results
+export const runCoValueBenchmarks = async (mode: Mode = 'async'): Promise<Bench[]> => {
+  console.log('[covalue-benchmarks] start');
+  const results: Bench[] = [];
   for (const benchFn of benches) {
-    const bench = await benchFn();
-    await bench.run();
-    benchmarks.push(bench);
+    try {
+      console.log('[covalue-benchmarks] init', benchFn.name);
+      const bench = await benchFn(mode);
+      console.log('[covalue-benchmarks] run', bench.name);
+      await bench.run();
+      console.log('[covalue-benchmarks] done', bench.name);
+      results.push(bench);
+    } catch (err) {
+      console.error('[covalue-benchmarks] error in', benchFn.name, err);
+      throw err;
+    }
   }
-  
-  return benchmarks;
+  console.log('[covalue-benchmarks] complete all');
+  return results;
 };
 
 // Run a single benchmark by name
-export const runSingleCoValueBenchmark = async (benchmarkName: string): Promise<Bench[]> => {
+export const runSingleCoValueBenchmark = async (
+  benchmarkName: string,
+  mode: Mode = 'async',
+): Promise<Bench[]> => {
   const benchFn = benchmarkMap[benchmarkName];
   if (!benchFn) {
     console.warn(`Benchmark '${benchmarkName}' not found`);
     return [];
   }
-  
-  const bench = await benchFn();
+
+  const bench = await benchFn(mode);
   await bench.run();
   return [bench];
 };

@@ -13,27 +13,32 @@ interface BenchmarkResult {
   throughput: { mean: number };
 }
 
-function CoValueBenchmarks() {
+interface CoValueBenchmarksProps {
+  mode: import('./covalue-benchmarks').Mode;
+}
+
+function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
   const [results, setResults] = useState<BenchmarkResult[]>([]);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null);
   const { runId, setBenchmarkComplete, registerBenchmark, unregisterBenchmark, shouldRunBenchmark } = useBenchmark();
 
   // Register this benchmark component when mounted
   useEffect(() => {
-    registerBenchmark('covalue', 'Jazz CoValue Benchmarks');
-    return () => unregisterBenchmark('covalue');
-  }, [registerBenchmark, unregisterBenchmark]);
+    const id = `covalue-${mode}`;
+    registerBenchmark(id, `CoValue (op-sqlite, ${mode})`);
+    return () => unregisterBenchmark(id);
+  }, [registerBenchmark, unregisterBenchmark, mode]);
 
   useEffect(() => {
     // Only run if this benchmark component should run
-    if (runId > 0 && shouldRunBenchmark('covalue')) {
+    if (runId > 0 && shouldRunBenchmark(`covalue-${mode}`)) {
       // Reset results when a new benchmark run is triggered
       setResults([]);
 
       // Check if we're running a specific benchmark or all benchmarks
       const benchmarkPromise = selectedBenchmark
-        ? runSingleCoValueBenchmark(selectedBenchmark)
-        : runCoValueBenchmarks();
+        ? runSingleCoValueBenchmark(selectedBenchmark, mode)
+        : runCoValueBenchmarks(mode);
 
       // Run the benchmarks and update the results
       benchmarkPromise.then((benchResults) => {
@@ -41,6 +46,7 @@ function CoValueBenchmarks() {
         const formattedResults = benchResults.map(bench => {
           // Ensure the bench has a name and tasks
           const name = bench.name || 'Unnamed Benchmark';
+          // Grab the first task
           const task = bench.tasks[0];
 
           // Access the result object dynamically to avoid TypeScript errors
@@ -51,15 +57,17 @@ function CoValueBenchmarks() {
           let throughputMean = 0;
 
           if (rawResult) {
-            // Try to get latency from stats.mean or directly from mean
-            if (rawResult.stats && typeof rawResult.stats.mean === 'number') {
-              latencyMean = rawResult.stats.mean;
+            // Convert seconds-per-op to milliseconds-per-op
+            if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
+              latencyMean = rawResult.latency.mean * 1000;
             } else if (typeof rawResult.mean === 'number') {
-              latencyMean = rawResult.mean;
+              latencyMean = rawResult.mean * 1000;
             }
 
-            // Try to get throughput from hz
-            if (typeof rawResult.hz === 'number') {
+            // Determine throughput (ops/sec)
+            if (rawResult.throughput && typeof rawResult.throughput.mean === 'number') {
+              throughputMean = rawResult.throughput.mean;
+            } else if (typeof rawResult.hz === 'number') {
               throughputMean = rawResult.hz;
             }
           }
@@ -72,11 +80,11 @@ function CoValueBenchmarks() {
         });
 
         setResults(formattedResults);
-        setBenchmarkComplete('covalue', true);
+        setBenchmarkComplete(`covalue-${mode}`, true);
         setSelectedBenchmark(null); // Reset selected benchmark after run
       });
     }
-  }, [runId, setBenchmarkComplete, selectedBenchmark, shouldRunBenchmark]);
+  }, [runId, setBenchmarkComplete, selectedBenchmark, shouldRunBenchmark, mode]);
 
   // Function to run a specific benchmark
   const runBenchmark = (benchmarkKey: string) => {
@@ -105,7 +113,7 @@ function CoValueBenchmarks() {
   };
 
   return (
-    <BenchmarkComponent name="Jazz CoValue (op-sqlite, async)" id="covalue">
+    <BenchmarkComponent name={`CoValue (op-sqlite, ${mode})`} id={`covalue-${mode}`}>
       {results.length > 0 && (
         <View style={styles.tableContainer}>
           {/* Table header */}

@@ -90,7 +90,7 @@
     },
     ".yalc/jazz-react-native-core": {
       "name": "jazz-react-native-core",
-      "version": "0.13.13+d30059bf",
+      "version": "0.13.13+8bc239bf",
       "dependencies": {
         "cojson": "*",
         "cojson-storage": "0.13.13",
