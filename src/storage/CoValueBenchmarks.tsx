@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useBenchmark } from '../benchmarks/BenchmarkContext';
 import { BenchmarkComponent } from '../benchmarks/BenchmarkComponent';
 import { formatNumber } from '../benchmarks/utils';
-import { runCoValueBenchmarks, runSingleCoValueBenchmark, benchmarkMap } from './covalue-benchmarks';
-import { Bench } from 'tinybench';
+import {
+  Mode,
+  runCoValueBenchmarks,
+  runSingleCoValueBenchmark,
+} from './covalue-benchmarks';
 
 // Define the result type for our benchmarks
 interface BenchmarkResult {
@@ -14,13 +23,21 @@ interface BenchmarkResult {
 }
 
 interface CoValueBenchmarksProps {
-  mode: import('./covalue-benchmarks').Mode;
+  mode: Mode;
 }
 
 function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
   const [results, setResults] = useState<BenchmarkResult[]>([]);
-  const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null);
-  const { runId, setBenchmarkComplete, registerBenchmark, unregisterBenchmark, shouldRunBenchmark } = useBenchmark();
+  const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(
+    null,
+  );
+  const {
+    runId,
+    setBenchmarkComplete,
+    registerBenchmark,
+    unregisterBenchmark,
+    shouldRunBenchmark,
+  } = useBenchmark();
 
   // Register this benchmark component when mounted
   useEffect(() => {
@@ -41,7 +58,7 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
         : runCoValueBenchmarks(mode);
 
       // Run the benchmarks and update the results
-      benchmarkPromise.then((benchResults) => {
+      benchmarkPromise.then(benchResults => {
         // Transform the benchmark results into a format for display
         const formattedResults = benchResults.map(bench => {
           // Ensure the bench has a name and tasks
@@ -58,14 +75,20 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
 
           if (rawResult) {
             // Convert seconds-per-op to milliseconds-per-op
-            if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
+            if (
+              rawResult.latency &&
+              typeof rawResult.latency.mean === 'number'
+            ) {
               latencyMean = rawResult.latency.mean * 1000;
             } else if (typeof rawResult.mean === 'number') {
               latencyMean = rawResult.mean * 1000;
             }
 
             // Determine throughput (ops/sec)
-            if (rawResult.throughput && typeof rawResult.throughput.mean === 'number') {
+            if (
+              rawResult.throughput &&
+              typeof rawResult.throughput.mean === 'number'
+            ) {
               throughputMean = rawResult.throughput.mean;
             } else if (typeof rawResult.hz === 'number') {
               throughputMean = rawResult.hz;
@@ -75,7 +98,7 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
           return {
             name,
             latency: { mean: latencyMean },
-            throughput: { mean: throughputMean }
+            throughput: { mean: throughputMean },
           };
         });
 
@@ -84,7 +107,13 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
         setSelectedBenchmark(null); // Reset selected benchmark after run
       });
     }
-  }, [runId, setBenchmarkComplete, selectedBenchmark, shouldRunBenchmark, mode]);
+  }, [
+    runId,
+    setBenchmarkComplete,
+    selectedBenchmark,
+    shouldRunBenchmark,
+    mode,
+  ]);
 
   // Function to run a specific benchmark
   const runBenchmark = (benchmarkKey: string) => {
@@ -93,8 +122,8 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
     // We'll use the BenchmarkComponent's re-run button to trigger this
   };
 
-  const renderBenchmark = ({item}: {item: BenchmarkResult}) => {
-    const {name, latency, throughput} = item;
+  const renderBenchmark = ({ item }: { item: BenchmarkResult }) => {
+    const { name, latency, throughput } = item;
 
     // Extract a cleaner name from the benchmark name
     const cleanName = name.replace('covalue-', '').replace(/-/g, ' ');
@@ -113,7 +142,9 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
   };
 
   return (
-    <BenchmarkComponent name={`CoValue (op-sqlite, ${mode})`} id={`covalue-${mode}`}>
+    <BenchmarkComponent
+      name={`CoValue (op-sqlite, ${mode})`}
+      id={`covalue-${mode}`}>
       {results.length > 0 && (
         <View style={styles.tableContainer}>
           {/* Table header */}
@@ -139,7 +170,7 @@ function CoValueBenchmarks({ mode }: CoValueBenchmarksProps) {
       )}
     </BenchmarkComponent>
   );
-};
+}
 
 const styles = StyleSheet.create({
   tableContainer: {

@@ -125,7 +125,8 @@ async function covalue_read_benchmark(mode: Mode = 'async') {
 
 // Benchmark for updating CoValue headers
 async function covalue_update_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
+  const { sqliteAdapter, sqliteClient, crypto } =
+    await setupJazzEnvironment(mode);
   // Insert base CoValue
   const initialHeader: CoValueHeader = {
     type: 'comap',
@@ -155,9 +156,15 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
       uniqueness: counter++,
     };
     if (mode === 'sync') {
-      sqliteAdapter.executeSync('UPDATE coValues SET header = ? WHERE id = ?', [JSON.stringify(newHeader), id]);
+      sqliteAdapter.executeSync('UPDATE coValues SET header = ? WHERE id = ?', [
+        JSON.stringify(newHeader),
+        id,
+      ]);
     } else {
-      await sqliteAdapter.executeAsync('UPDATE coValues SET header = ? WHERE id = ?', [JSON.stringify(newHeader), id]);
+      await sqliteAdapter.executeAsync(
+        'UPDATE coValues SET header = ? WHERE id = ?',
+        [JSON.stringify(newHeader), id],
+      );
     }
   });
   return bench;
@@ -165,7 +172,8 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
 
 // Benchmark for deleting CoValue entries
 async function covalue_delete_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
+  const { sqliteAdapter, sqliteClient, crypto } =
+    await setupJazzEnvironment(mode);
   const bench = new Bench({
     name: 'covalue-delete',
     time: TIME_MS,
@@ -190,7 +198,9 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
     if (mode === 'sync') {
       sqliteAdapter.executeSync('DELETE FROM coValues WHERE id = ?', [id]);
     } else {
-      await sqliteAdapter.executeAsync('DELETE FROM coValues WHERE id = ?', [id]);
+      await sqliteAdapter.executeAsync('DELETE FROM coValues WHERE id = ?', [
+        id,
+      ]);
     }
     counter++;
   });
@@ -198,7 +208,9 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
 }
 
 // Run all benchmarks and return the results
-export const runCoValueBenchmarks = async (mode: Mode = 'async'): Promise<Bench[]> => {
+export const runCoValueBenchmarks = async (
+  mode: Mode = 'async',
+): Promise<Bench[]> => {
   console.log('[covalue-benchmarks] start');
   const results: Bench[] = [];
   for (const benchFn of benches) {
