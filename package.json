@@ -1,8 +1,11 @@
 {
   "name": "jazzstress-mono",
-  "workspaces":[
+  "workspaces": [
+    "apps/expo",
     "apps/rn",
+    "lib",
     ".yalc/cojson",
+    ".yalc/jazz-expo",
     ".yalc/jazz-react-core",
     ".yalc/jazz-react-native",
     ".yalc/jazz-react-native-core",
