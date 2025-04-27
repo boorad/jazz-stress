@@ -4,12 +4,6 @@ import { polyfillGlobal } from 'react-native/Libraries/Utilities/PolyfillFunctio
 import { Buffer } from 'buffer';
 polyfillGlobal('Buffer', () => Buffer);
 
-// // @ts-expect-error - @types/readable-stream doesn't have ReadableStream type
-// import { ReadableStream } from 'readable-stream';
-// polyfillGlobal('ReadableStream', () => ReadableStream);
-
-// import '@azure/core-asynciterator-polyfill';
-
 import 'react-native-get-random-values';
 
 import '@bacons/text-decoder/install';

@@ -1,5 +1,5 @@
 {
-  "name": "jazzstress",
+  "name": "jazzstress-rn",
   "version": "0.0.2",
   "private": true,
   "scripts": {
@@ -22,6 +22,7 @@
     "jazz-react-native": "workspace:*",
     "jazz-react-native-core": "workspace:*",
     "jazz-tools": "workspace:*",
+    "lib": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.76.7",
     "react-native-get-random-values": "1.11.0",
