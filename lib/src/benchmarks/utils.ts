@@ -1,13 +1,13 @@
-import { TaskResult } from 'tinybench';
+import { TaskResult } from "tinybench";
 
 // Format a number with a suffix
 export const formatNumber = (
   n: number,
   decimals: number,
-  suffix: string,
+  suffix: string
 ): string => {
   if (isNaN(n)) {
-    return '';
+    return "";
   }
   return n.toFixed(decimals) + suffix;
 };
@@ -25,11 +25,9 @@ export const cleanResults = (
   if (result?.error) {
     console.log(`error: ${name} - ${result.error.message}`);
   }
-  const copy = {...result};
-  delete copy.samples;
-  // @ts-expect-error - samples property is not in the type definition
-  delete copy.latency?.samples;
-  // @ts-expect-error - samples property is not in the type definition
-  delete copy.throughput?.samples;
+  const copy = { ...result };
+  delete (copy as any).samples;
+  delete (copy as any).latency?.samples;
+  delete (copy as any).throughput?.samples;
   return copy;
 };

@@ -6,18 +6,20 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import { BenchmarkProvider, useBenchmark } from './benchmarks/BenchmarkContext';
-import { CryptoBenchmarks } from './crypto/CryptoBenchmarks';
-import { CoValueBenchmarks } from './storage/CoValueBenchmarks';
+import { BenchmarkProvider, useBenchmark } from 'lib/benchmarks';
+import { CryptoBenchmarks, CoValueBenchmarks } from 'lib/components';
+import { runCryptoBenchmarks, runSingleBenchmark } from './crypto/benchmarks';
+import {
+  runCoValueBenchmarks,
+  runSingleCoValueBenchmark,
+} from './storage/benchmarks';
 
 // Button component that uses the benchmark context
 function RunButton() {
   const { runBenchmarks } = useBenchmark();
 
   return (
-    <TouchableOpacity
-      onPress={runBenchmarks}
-      style={styles.runButton}>
+    <TouchableOpacity onPress={runBenchmarks} style={styles.runButton}>
       <Text style={styles.buttonText}>Run Benchmarks</Text>
     </TouchableOpacity>
   );
@@ -29,9 +31,20 @@ function AppContent(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Jazz Stress Tests</Text>
       <ScrollView style={styles.scrollView}>
-        <CryptoBenchmarks />
-        <CoValueBenchmarks mode="async" />
-        <CoValueBenchmarks mode="sync" />
+        <CryptoBenchmarks
+          runAll={runCryptoBenchmarks}
+          runSingle={runSingleBenchmark}
+        />
+        <CoValueBenchmarks
+          mode="async"
+          runAll={runCoValueBenchmarks}
+          runSingle={runSingleCoValueBenchmark}
+        />
+        <CoValueBenchmarks
+          mode="sync"
+          runAll={runCoValueBenchmarks}
+          runSingle={runSingleCoValueBenchmark}
+        />
       </ScrollView>
       <RunButton />
     </SafeAreaView>
@@ -79,4 +92,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

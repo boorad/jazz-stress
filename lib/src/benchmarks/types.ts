@@ -1,4 +1,4 @@
-import { TaskResult } from 'tinybench';
+import { TaskResult } from "tinybench";
 
 // Generic benchmark result type
 export interface BenchmarkResult {
@@ -16,10 +16,8 @@ export interface CryptoBenchmarkResult {
 // Storage-specific benchmark result type for SQLite operations
 export interface StorageBenchmarkResult {
   name: string | undefined;
-  sqlite: {
-    latency: { mean: number };
-    throughput: { mean: number };
-  };
+  latency: { mean: number };
+  throughput: { mean: number };
 }
 
 // Common benchmark utilities

@@ -3,6 +3,14 @@
   "version": "0.0.2",
   "private": true,
   "exports": {
-    "./polyfills": "./polyfills.ts"
+    "./polyfills": "./src/polyfills.ts",
+    "./benchmarks": {
+      "import": "./src/benchmarks/index.ts",
+      "require": "./src/benchmarks/index.js"
+    },
+    "./components": {
+      "import": "./src/components/index.ts",
+      "require": "./src/components/index.js"
+    }
   }
 }
