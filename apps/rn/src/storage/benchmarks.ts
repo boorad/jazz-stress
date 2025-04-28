@@ -32,7 +32,7 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
 // Setup the Jazz environment with SQLite storage
 export const setupJazzEnvironment = async (mode: Mode = 'async') => {
   // Initialize the SQLite adapter with a unique database name to avoid conflicts
-  const dbName = `jazz-stress-benchmark-${Date.now()}.db`;
+  const dbName = `jazz-stress-benchmark-${mode}-${Date.now()}.db`;
   const sqliteAdapter = new OPSQLiteAdapter(dbName);
   const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
   await sqliteClient.ensureInitialized();
@@ -214,10 +214,10 @@ export const runCoValueBenchmarks = async (
   mode: Mode = 'async',
 ): Promise<StorageBenchmarkResult[]> => {
   console.log('[covalue-benchmarks] start');
-  
+
   // Use the shared runStorageBenchmarks function from lib
   const results = await runStorageBenchmarks(benches, mode);
-  
+
   console.log('[covalue-benchmarks] complete all');
   return results;
 };

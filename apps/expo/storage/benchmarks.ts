@@ -35,7 +35,7 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
 
 // Setup the Jazz environment with SQLite storage
 export const setupJazzEnvironment = async (mode: Mode = "async") => {
-  const dbName = `jazz-expo-benchmark-${Date.now()}.db`;
+  const dbName = `jazz-expo-benchmark-${mode}-${Date.now()}.db`;
   const sqliteAdapter = new ExpoSQLiteAdapter(dbName);
   const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
   await sqliteClient.ensureInitialized();

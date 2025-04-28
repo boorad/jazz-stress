@@ -92,7 +92,7 @@ export const CoValueBenchmarks: React.FC<CoValueBenchmarksProps> = ({
         <View style={styles.tableContainer}>
           <View style={styles.headerRow}>
             <Text style={[styles.text, styles.label]}>Benchmark</Text>
-            <Text style={[styles.text, styles.headerValue]}>ms</Text>
+            <Text style={[styles.text, styles.headerValue]}>µs</Text>
             <Text style={[styles.text, styles.headerValue]}>ops/s</Text>
           </View>
           <FlatList
