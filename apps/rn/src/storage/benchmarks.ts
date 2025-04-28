@@ -4,6 +4,7 @@ import { OPSQLiteAdapter, SQLiteClient } from 'jazz-react-native';
 import { CoValueHeader, idforHeader } from 'cojson/dist/coValueCore.js';
 import { PermissionsDef } from 'cojson/dist/permissions.js';
 import type { StorageBenchmarkResult } from 'lib/benchmarks';
+import { runStorageBenchmarks, runSingleStorageBenchmark } from 'lib/benchmarks';
 
 // Reduced benchmark time for quicker feedback
 const TIME_MS = 1000; // 1 second
@@ -208,83 +209,24 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
   return bench;
 }
 
-// Run all benchmarks and return the results
+// Run all benchmarks and return the results using shared library function
 export const runCoValueBenchmarks = async (
   mode: Mode = 'async',
 ): Promise<StorageBenchmarkResult[]> => {
   console.log('[covalue-benchmarks] start');
-  const results: StorageBenchmarkResult[] = [];
-  for (const benchFn of benches) {
-    const bench = await benchFn(mode);
-    await bench.run();
-    for (const task of bench.tasks) {
-      const rawResult = task.result as any;
-      let latencyMean = 0;
-      let throughputMean = 0;
-      if (rawResult) {
-        if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
-          latencyMean = rawResult.latency.mean * 1000;
-        } else if (typeof rawResult.mean === 'number') {
-          latencyMean = rawResult.mean * 1000;
-        }
-        if (
-          rawResult.throughput &&
-          typeof rawResult.throughput.mean === 'number'
-        ) {
-          throughputMean = rawResult.throughput.mean;
-        } else if (typeof rawResult.hz === 'number') {
-          throughputMean = rawResult.hz;
-        }
-      }
-      results.push({
-        name: task.name,
-        latency: { mean: latencyMean },
-        throughput: { mean: throughputMean },
-      });
-    }
-  }
+  
+  // Use the shared runStorageBenchmarks function from lib
+  const results = await runStorageBenchmarks(benches, mode);
+  
   console.log('[covalue-benchmarks] complete all');
   return results;
 };
 
-// Run a single benchmark by name
+// Run a single benchmark by name using shared library function
 export const runSingleCoValueBenchmark = async (
   benchmarkName: string,
   mode: Mode = 'async',
 ): Promise<StorageBenchmarkResult[]> => {
-  const benchFn = benchmarkMap[benchmarkName];
-  if (!benchFn) {
-    console.warn(`Benchmark '${benchmarkName}' not found`);
-    return [];
-  }
-
-  const bench = await benchFn(mode);
-  await bench.run();
-  const results: StorageBenchmarkResult[] = [];
-  for (const task of bench.tasks) {
-    const rawResult = task.result as any;
-    let latencyMean = 0;
-    let throughputMean = 0;
-    if (rawResult) {
-      if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
-        latencyMean = rawResult.latency.mean * 1000;
-      } else if (typeof rawResult.mean === 'number') {
-        latencyMean = rawResult.mean * 1000;
-      }
-      if (
-        rawResult.throughput &&
-        typeof rawResult.throughput.mean === 'number'
-      ) {
-        throughputMean = rawResult.throughput.mean;
-      } else if (typeof rawResult.hz === 'number') {
-        throughputMean = rawResult.hz;
-      }
-    }
-    results.push({
-      name: task.name,
-      latency: { mean: latencyMean },
-      throughput: { mean: throughputMean },
-    });
-  }
-  return results;
+  // Use the shared runSingleStorageBenchmark function from lib
+  return runSingleStorageBenchmark(benchmarkMap, benchmarkName, mode);
 };
