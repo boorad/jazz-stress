@@ -9,7 +9,8 @@ const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const config = getDefaultConfig(projectRoot);
 
-config.watchFolders = [workspaceRoot];
+// Watch the monorepo root and lib folder
+config.watchFolders = [workspaceRoot, path.resolve(workspaceRoot, 'lib')];
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
 
@@ -22,5 +23,10 @@ config.cacheStores = [
     root: path.join(projectRoot, "node_modules", ".cache", "metro"),
   }),
 ];
+
+// Alias 'lib' to its source directory
+config.resolver.extraNodeModules = { lib: path.resolve(workspaceRoot, 'lib', 'src') };
+// Enable Node package exports maps
+config.resolver.unstable_enablePackageExports = true;
 
 module.exports = config;

@@ -10,14 +10,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.boorad.jazzstressexpo"
+      "bundleIdentifier": "tools.jazz.jazzstress-expo"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.boorad.jazzstressexpo"
+      "package": "tools.jazz.jazzstress-expo"
     },
     "web": {
       "bundler": "metro",

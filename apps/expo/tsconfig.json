@@ -1,17 +1,32 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "baseUrl": ".",
     "strict": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "lib/*": [
+        "../../lib/src/*"
+      ],
+      "cojson/*": [
+        "../../node_modules/cojson/dist/*"
+      ],
+      "jazz-react-native-core/*": [
+        "../../node_modules/jazz-react-native-core/dist/*"
+      ],
+      "jazz-react-native/*": [
+        "../../node_modules/jazz-react-native/dist/*"
       ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "**/*.tsx"
   ]
 }
