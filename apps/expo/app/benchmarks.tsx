@@ -17,6 +17,7 @@ import {
 
 // Suppress VirtualizedLists nesting warning
 LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
+LogBox.ignoreLogs(["Linking requires a build-time setting"]);
 
 function RunButton() {
   const { runBenchmarks } = useBenchmark();
@@ -69,9 +70,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#fff",
+    textAlign: "center",
     marginVertical: 4,
   },
   scrollContent: {

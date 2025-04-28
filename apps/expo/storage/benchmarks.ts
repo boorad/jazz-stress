@@ -1,17 +1,17 @@
-import { RNQuickCrypto } from 'jazz-react-native-core/crypto';
-import { Bench } from 'tinybench';
-import { ExpoSQLiteAdapter } from 'jazz-expo';
-import { SQLiteClient } from 'jazz-react-native-core';
-import { CoValueHeader, idforHeader } from 'cojson/dist/coValueCore.js';
-import { PermissionsDef } from 'cojson/dist/permissions.js';
-import type { StorageBenchmarkResult } from 'lib/benchmarks';
+import { RNQuickCrypto } from "jazz-react-native-core/crypto";
+import { Bench } from "tinybench";
+import { ExpoSQLiteAdapter } from "jazz-expo";
+import { SQLiteClient } from "jazz-react-native-core";
+import { CoValueHeader, idforHeader } from "cojson/dist/coValueCore.js";
+import { PermissionsDef } from "cojson/dist/permissions.js";
+import type { StorageBenchmarkResult } from "lib/benchmarks";
 
 // Reduced benchmark time for quicker feedback
 const TIME_MS = 1000; // 1 second
 const WARMUP_MS = 200; // 0.2 seconds
 
 // Mode controls sync or async SQLiteClient
-export type Mode = 'async' | 'sync';
+export type Mode = "async" | "sync";
 
 // Benchmarks for Jazz coValue operations
 const benches = [
@@ -23,14 +23,14 @@ const benches = [
 
 // Map benchmark names to functions
 export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
-  'covalue-create': covalue_create_benchmark,
-  'covalue-read': covalue_read_benchmark,
-  'covalue-update': covalue_update_benchmark,
-  'covalue-delete': covalue_delete_benchmark,
+  "covalue-create": covalue_create_benchmark,
+  "covalue-read": covalue_read_benchmark,
+  "covalue-update": covalue_update_benchmark,
+  "covalue-delete": covalue_delete_benchmark,
 };
 
 // Setup the Jazz environment with SQLite storage
-export const setupJazzEnvironment = async (mode: Mode = 'async') => {
+export const setupJazzEnvironment = async (mode: Mode = "async") => {
   const dbName = `jazz-expo-benchmark-${Date.now()}.db`;
   const sqliteAdapter = new ExpoSQLiteAdapter(dbName);
   const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
@@ -54,20 +54,20 @@ export const setupJazzEnvironment = async (mode: Mode = 'async') => {
 };
 
 // Benchmark for creating coValues
-async function covalue_create_benchmark(mode: Mode = 'async') {
+async function covalue_create_benchmark(mode: Mode = "async") {
   const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
 
   const bench = new Bench({
-    name: 'covalue-create',
+    name: "covalue-create",
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
 
   let createCounter = 0;
 
-  bench.add('create-comap', async () => {
+  bench.add("create-comap", async () => {
     const header: CoValueHeader = {
-      type: 'comap',
+      type: "comap",
       ruleset: {} as PermissionsDef,
       meta: null,
       uniqueness: createCounter++,
@@ -75,32 +75,44 @@ async function covalue_create_benchmark(mode: Mode = 'async') {
 
     const id = idforHeader(header, crypto);
 
-    await sqliteClient.addCoValue({ id, header, action: 'content', priority: 0, new: {} });
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: "content",
+      priority: 0,
+      new: {},
+    });
   });
 
   return bench;
 }
 
 // Benchmark for getting values from a coValue
-async function covalue_read_benchmark(mode: Mode = 'async') {
+async function covalue_read_benchmark(mode: Mode = "async") {
   const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
   const header: CoValueHeader = {
-    type: 'comap',
+    type: "comap",
     meta: { createdAt: Date.now() },
     ruleset: {} as PermissionsDef,
     uniqueness: null,
   };
   const id = idforHeader(header, crypto);
 
-  await sqliteClient.addCoValue({ id, header, action: 'content', priority: 0, new: {} });
+  await sqliteClient.addCoValue({
+    id,
+    header,
+    action: "content",
+    priority: 0,
+    new: {},
+  });
 
   const bench = new Bench({
-    name: 'covalue-read',
+    name: "covalue-read",
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
 
-  bench.add('read-comap', async () => {
+  bench.add("read-comap", async () => {
     await sqliteClient.getCoValue(id);
   });
 
@@ -108,31 +120,48 @@ async function covalue_read_benchmark(mode: Mode = 'async') {
 }
 
 // Benchmark for updating CoValue headers
-async function covalue_update_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
+async function covalue_update_benchmark(mode: Mode = "async") {
+  const { sqliteAdapter, sqliteClient, crypto } =
+    await setupJazzEnvironment(mode);
 
   const initialHeader: CoValueHeader = {
-    type: 'comap',
+    type: "comap",
     ruleset: {} as PermissionsDef,
     meta: null,
     uniqueness: 0,
   };
   const id = idforHeader(initialHeader, crypto);
-  await sqliteClient.addCoValue({ id, header: initialHeader, action: 'content', priority: 0, new: {} });
+  await sqliteClient.addCoValue({
+    id,
+    header: initialHeader,
+    action: "content",
+    priority: 0,
+    new: {},
+  });
 
   const bench = new Bench({
-    name: 'covalue-update',
+    name: "covalue-update",
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
   let counter = 1;
 
-  bench.add('update-header', async () => {
-    const newHeader: CoValueHeader = { ...initialHeader, meta: { updated: counter }, uniqueness: counter++ };
-    if (mode === 'sync') {
-      sqliteAdapter.executeSync('UPDATE coValues SET header = ? WHERE id = ?', [JSON.stringify(newHeader), id]);
+  bench.add("update-header", async () => {
+    const newHeader: CoValueHeader = {
+      ...initialHeader,
+      meta: { updated: counter },
+      uniqueness: counter++,
+    };
+    if (mode === "sync") {
+      sqliteAdapter.executeSync("UPDATE coValues SET header = ? WHERE id = ?", [
+        JSON.stringify(newHeader),
+        id,
+      ]);
     } else {
-      await sqliteAdapter.executeAsync('UPDATE coValues SET header = ? WHERE id = ?',[JSON.stringify(newHeader), id]);
+      await sqliteAdapter.executeAsync(
+        "UPDATE coValues SET header = ? WHERE id = ?",
+        [JSON.stringify(newHeader), id]
+      );
     }
   });
 
@@ -140,24 +169,38 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
 }
 
 // Benchmark for deleting CoValue entries
-async function covalue_delete_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } = await setupJazzEnvironment(mode);
+async function covalue_delete_benchmark(mode: Mode = "async") {
+  const { sqliteAdapter, sqliteClient, crypto } =
+    await setupJazzEnvironment(mode);
 
   const bench = new Bench({
-    name: 'covalue-delete',
+    name: "covalue-delete",
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
   let counter = 0;
 
-  bench.add('delete-comap', async () => {
-    const header: CoValueHeader = { type: 'comap', ruleset: {} as PermissionsDef, meta: null, uniqueness: counter };
+  bench.add("delete-comap", async () => {
+    const header: CoValueHeader = {
+      type: "comap",
+      ruleset: {} as PermissionsDef,
+      meta: null,
+      uniqueness: counter,
+    };
     const id = idforHeader(header, crypto);
-    await sqliteClient.addCoValue({ id, header, action: 'content', priority: 0, new: {} });
-    if (mode === 'sync') {
-      sqliteAdapter.executeSync('DELETE FROM coValues WHERE id = ?', [id]);
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: "content",
+      priority: 0,
+      new: {},
+    });
+    if (mode === "sync") {
+      sqliteAdapter.executeSync("DELETE FROM coValues WHERE id = ?", [id]);
     } else {
-      await sqliteAdapter.executeAsync('DELETE FROM coValues WHERE id = ?', [id]);
+      await sqliteAdapter.executeAsync("DELETE FROM coValues WHERE id = ?", [
+        id,
+      ]);
     }
     counter++;
   });
@@ -167,7 +210,7 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
 
 // Run all benchmarks and return the results
 export const runCoValueBenchmarks = async (
-  mode: Mode = 'async',
+  mode: Mode = "async"
 ): Promise<StorageBenchmarkResult[]> => {
   const results: StorageBenchmarkResult[] = [];
   for (const benchFn of benches) {
@@ -178,18 +221,25 @@ export const runCoValueBenchmarks = async (
       let latencyMean = 0;
       let throughputMean = 0;
       if (rawResult) {
-        if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
+        if (rawResult.latency && typeof rawResult.latency.mean === "number") {
           latencyMean = rawResult.latency.mean * 1000;
-        } else if (typeof rawResult.mean === 'number') {
+        } else if (typeof rawResult.mean === "number") {
           latencyMean = rawResult.mean * 1000;
         }
-        if (rawResult.throughput && typeof rawResult.throughput.mean === 'number') {
+        if (
+          rawResult.throughput &&
+          typeof rawResult.throughput.mean === "number"
+        ) {
           throughputMean = rawResult.throughput.mean;
-        } else if (typeof rawResult.hz === 'number') {
+        } else if (typeof rawResult.hz === "number") {
           throughputMean = rawResult.hz;
         }
       }
-      results.push({ name: task.name, latency: { mean: latencyMean }, throughput: { mean: throughputMean } });
+      results.push({
+        name: task.name,
+        latency: { mean: latencyMean },
+        throughput: { mean: throughputMean },
+      });
     }
   }
   return results;
@@ -198,7 +248,7 @@ export const runCoValueBenchmarks = async (
 // Run a single benchmark by name
 export const runSingleCoValueBenchmark = async (
   benchmarkName: string,
-  mode: Mode = 'async',
+  mode: Mode = "async"
 ): Promise<StorageBenchmarkResult[]> => {
   const benchFn = benchmarkMap[benchmarkName];
   if (!benchFn) {
@@ -213,18 +263,25 @@ export const runSingleCoValueBenchmark = async (
     let latencyMean = 0;
     let throughputMean = 0;
     if (rawResult) {
-      if (rawResult.latency && typeof rawResult.latency.mean === 'number') {
+      if (rawResult.latency && typeof rawResult.latency.mean === "number") {
         latencyMean = rawResult.latency.mean * 1000;
-      } else if (typeof rawResult.mean === 'number') {
+      } else if (typeof rawResult.mean === "number") {
         latencyMean = rawResult.mean * 1000;
       }
-      if (rawResult.throughput && typeof rawResult.throughput.mean === 'number') {
+      if (
+        rawResult.throughput &&
+        typeof rawResult.throughput.mean === "number"
+      ) {
         throughputMean = rawResult.throughput.mean;
-      } else if (typeof rawResult.hz === 'number') {
+      } else if (typeof rawResult.hz === "number") {
         throughputMean = rawResult.hz;
       }
     }
-    results.push({ name: task.name, latency: { mean: latencyMean }, throughput: { mean: throughputMean } });
+    results.push({
+      name: task.name,
+      latency: { mean: latencyMean },
+      throughput: { mean: throughputMean },
+    });
   }
   return results;
 };
