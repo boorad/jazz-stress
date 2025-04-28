@@ -12,12 +12,15 @@ import type { StorageBenchmarkResult } from "../benchmarks/types";
 export type Mode = "async" | "sync";
 
 interface CoValueBenchmarksProps {
+  /** name of the storage library */
+  library: string;
   mode: Mode;
   runAll: (mode: Mode) => Promise<StorageBenchmarkResult[]>;
   runSingle: (key: string, mode: Mode) => Promise<StorageBenchmarkResult[]>;
 }
 
 export const CoValueBenchmarks: React.FC<CoValueBenchmarksProps> = ({
+  library,
   mode,
   runAll,
   runSingle,
@@ -36,9 +39,9 @@ export const CoValueBenchmarks: React.FC<CoValueBenchmarksProps> = ({
 
   useEffect(() => {
     const id = `covalue-${mode}`;
-    registerBenchmark(id, `CoValue (op-sqlite, ${mode})`);
+    registerBenchmark(id, `CoValue (${library}, ${mode})`);
     return () => unregisterBenchmark(id);
-  }, [mode, registerBenchmark, unregisterBenchmark]);
+  }, [library, mode, registerBenchmark, unregisterBenchmark]);
 
   useEffect(() => {
     if (runId > 0 && shouldRunBenchmark(`covalue-${mode}`)) {
@@ -82,7 +85,7 @@ export const CoValueBenchmarks: React.FC<CoValueBenchmarksProps> = ({
 
   return (
     <BenchmarkComponent
-      name={`CoValue (op-sqlite, ${mode})`}
+      name={`CoValue (${library}, ${mode})`}
       id={`covalue-${mode}`}
     >
       {results.length > 0 ? (
@@ -115,10 +118,10 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingBottom: 8,
+    paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#555",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   headerValue: {
     fontFamily: "Courier New",
@@ -131,9 +134,7 @@ const styles = StyleSheet.create({
   resultsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
+    paddingVertical: 3,
   },
   list: {},
   text: {

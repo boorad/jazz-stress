@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  LogBox,
 } from "react-native";
 import { BenchmarkProvider, useBenchmark } from "lib/benchmarks";
 import { CryptoBenchmarks, CoValueBenchmarks } from "lib/components";
@@ -13,6 +14,9 @@ import {
   runCoValueBenchmarks,
   runSingleCoValueBenchmark,
 } from "../storage/benchmarks";
+
+// Suppress VirtualizedLists nesting warning
+LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
 
 function RunButton() {
   const { runBenchmarks } = useBenchmark();
@@ -26,17 +30,20 @@ function RunButton() {
 function BenchmarksScreenContent(): JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Jazz Stress Tests</Text>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <CryptoBenchmarks
           runAll={runCryptoBenchmarks}
           runSingle={runSingleBenchmark}
         />
         <CoValueBenchmarks
+          library="expo-sqlite"
           mode="async"
           runAll={runCoValueBenchmarks}
           runSingle={runSingleCoValueBenchmark}
         />
         <CoValueBenchmarks
+          library="expo-sqlite"
           mode="sync"
           runAll={runCoValueBenchmarks}
           runSingle={runSingleCoValueBenchmark}
@@ -59,6 +66,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#333",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+    marginVertical: 4,
   },
   scrollContent: {
     paddingHorizontal: 10,

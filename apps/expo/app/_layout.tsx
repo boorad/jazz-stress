@@ -35,7 +35,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <BenchmarksScreen />
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }

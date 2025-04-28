@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  LogBox,
 } from 'react-native';
 import { BenchmarkProvider, useBenchmark } from 'lib/benchmarks';
 import { CryptoBenchmarks, CoValueBenchmarks } from 'lib/components';
@@ -13,6 +14,9 @@ import {
   runCoValueBenchmarks,
   runSingleCoValueBenchmark,
 } from './storage/benchmarks';
+
+// Suppress VirtualizedLists nesting warning
+LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
 
 // Button component that uses the benchmark context
 function RunButton() {
@@ -36,11 +40,13 @@ function AppContent(): React.JSX.Element {
           runSingle={runSingleBenchmark}
         />
         <CoValueBenchmarks
+          library="op-sqlite"
           mode="async"
           runAll={runCoValueBenchmarks}
           runSingle={runSingleCoValueBenchmark}
         />
         <CoValueBenchmarks
+          library="op-sqlite"
           mode="sync"
           runAll={runCoValueBenchmarks}
           runSingle={runSingleCoValueBenchmark}
@@ -74,7 +80,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
-    marginVertical: 16,
+    marginVertical: 4,
   },
   runButton: {
     backgroundColor: '#007AFF',
