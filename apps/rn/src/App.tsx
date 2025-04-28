@@ -33,7 +33,7 @@ function RunButton() {
 function AppContent(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Jazz Stress Tests</Text>
+      <Text style={styles.title}>Jazz Stress Tests (RN)</Text>
       <ScrollView style={styles.scrollView}>
         <CryptoBenchmarks
           runAll={runCryptoBenchmarks}

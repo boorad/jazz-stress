@@ -31,7 +31,7 @@ function RunButton() {
 function BenchmarksScreenContent(): JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Jazz Stress Tests</Text>
+      <Text style={styles.title}>Jazz Stress Tests (Expo)</Text>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <CryptoBenchmarks
           runAll={runCryptoBenchmarks}
