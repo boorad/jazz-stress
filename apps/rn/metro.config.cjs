@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* eslint-disable no-undef */
+
 const path = require("path");
 const { makeMetroConfig } = require("@rnx-kit/metro-config");
 const MetroSymlinksResolver = require("@rnx-kit/metro-resolver-symlinks");
@@ -30,20 +33,3 @@ module.exports = makeMetroConfig({
     libSrc,
   ],
 });
-
-// // Detect Node core modules to skip custom resolution
-// const { builtinModules } = require('module');
-
-// // Use Node's resolution algorithm to respect package.json "exports" field, fallback to symlink resolver
-// const customResolver = (context, moduleName, platform) => {
-//   // Only intercept non-relative, non-absolute imports
-//   if (!moduleName.startsWith('.') && !path.isAbsolute(moduleName) && !builtinModules.includes(moduleName)) {
-//     try {
-//       const filePath = require.resolve(moduleName, { paths: [workspaceRoot] });
-//       return { type: 'sourceFile', filePath };
-//     } catch (e) {
-//       // ignore
-//     }
-//   }
-//   return MetroSymlinksResolver()(context, moduleName, platform);
-// };
