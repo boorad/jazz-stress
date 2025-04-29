@@ -211,12 +211,53 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
   });
 
   // Number of operations to perform in each category
-  const NUM_OPERATIONS = 20;
-  
+  const NUM_OPERATIONS = 100; // Increased for more stress
+
+  // Create a complex object to use as CoValue content
+  // We'll use a simple object structure to avoid type issues
+  const generateComplexContent = (index: number) => {
+    // Create a large object with nested properties to stress the database
+    const largeObject: Record<string, any> = {};
+
+    // Add a lot of nested data - this will create a large JSON object
+    // without running into type issues
+    for (let i = 0; i < 20; i++) {
+      const key = `data_${index}_${i}`;
+      largeObject[key] = {
+        id: `id_${index}_${i}`,
+        timestamp: Date.now() + i,
+        name: `Item ${i} for user ${index}`,
+        description: `This is a detailed description for item ${i} belonging to user ${index}. It contains enough text to make the JSON object larger and more complex, which should help stress the database more effectively.`,
+        metadata: {
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
+          version: i + 1,
+          status: ['active', 'pending', 'archived', 'deleted'][i % 4],
+          tags: Array.from({ length: 5 }, (_, t) => `tag_${t}_${index}`),
+          nested: {
+            level1: {
+              level2: {
+                level3: {
+                  value: `Deep nested value ${i}`,
+                  array: Array.from({ length: 10 }, (_, a) => ({
+                    subId: `subitem_${a}`,
+                    subValue: `Value for subitem ${a} in item ${i} for user ${index}`
+                  }))
+                }
+              }
+            }
+          }
+        }
+      };
+    }
+
+    return largeObject;
+  };
+
   // Create a set of initial CoValues that we'll use for read operations
   const coValueIds: string[] = [];
   const numInitialCoValues = NUM_OPERATIONS;
-  
+
   for (let i = 0; i < numInitialCoValues; i++) {
     const header: CoValueHeader = {
       type: "comap",
@@ -230,76 +271,87 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
       header,
       action: "content",
       priority: 0,
-      new: {}, // Empty object for new content to avoid type errors
+      new: generateComplexContent(i),
     });
     coValueIds.push(id);
   }
 
   let counter = numInitialCoValues;
 
-  bench.add("concurrent-operations", async () => {
-    // Create an array of promises for concurrent operations
-    const operations: Promise<any>[] = [];
-    
+  bench.add(`database-flood (${NUM_OPERATIONS})`, async () => {
+    // This benchmark aggressively floods the database with concurrent operations
+    // to reproduce the 'database is locked' errors
+
+    // We'll track errors to see how many operations failed
+    let errorCount = 0;
+    let successCount = 0;
+
+    // Create a function to execute a single operation and return a promise
+    const executeOperation = (type: 'create' | 'read') => {
+      if (type === 'create') {
+        const uniqueCounter = counter++;
+        const header: CoValueHeader = {
+          type: "comap",
+          ruleset: {} as PermissionsDef,
+          meta: { createdInBatch: uniqueCounter },
+          uniqueness: uniqueCounter,
+        };
+        const id = idforHeader(header, crypto);
+
+        return sqliteClient.addCoValue({
+          id,
+          header,
+          action: "content",
+          priority: 0,
+          new: generateComplexContent(uniqueCounter),
+        }).then(() => {
+          successCount++;
+          return 'success';
+        }).catch(err => {
+          errorCount++;
+          // Uncomment to see errors
+          // console.error(`Create error: ${err.message}`);
+          return 'error';
+        });
+      } else { // read
+        const randomIndex = Math.floor(Math.random() * coValueIds.length);
+        const id = coValueIds[randomIndex] as `co_z${string}`;
+
+        return sqliteClient.getCoValue(id).then(() => {
+          successCount++;
+          return 'success';
+        }).catch(err => {
+          errorCount++;
+          // Uncomment to see errors
+          // console.error(`Read error: ${err.message}`);
+          return 'error';
+        });
+      }
+    };
+
+    // Create a large number of promises that will all execute in parallel
+    // without any coordination or batching
+    const promises = [];
+
     // Add create operations
     for (let i = 0; i < NUM_OPERATIONS; i++) {
-      const uniqueCounter = counter++;
-      const header: CoValueHeader = {
-        type: "comap",
-        ruleset: {} as PermissionsDef,
-        meta: { createdInBatch: uniqueCounter },
-        uniqueness: uniqueCounter,
-      };
-      const id = idforHeader(header, crypto);
-      
-      const createPromise = sqliteClient.addCoValue({
-        id,
-        header,
-        action: "content",
-        priority: 0,
-        new: {}, // Empty object for new content to avoid type errors
-      });
-      
-      operations.push(createPromise);
+      promises.push(executeOperation('create'));
     }
-    
-    // Add read operations for existing CoValues
+
+    // Add read operations
     for (let i = 0; i < NUM_OPERATIONS; i++) {
-      // Pick a random CoValue from our initial set
-      const randomIndex = Math.floor(Math.random() * coValueIds.length);
-      // Type assertion to handle the ID format requirement
-      const id = coValueIds[randomIndex] as `co_z${string}`;
-      const readPromise = sqliteClient.getCoValue(id);
-      operations.push(readPromise);
+      promises.push(executeOperation('read'));
     }
-    
-    // Add update operations
-    for (let i = 0; i < NUM_OPERATIONS; i++) {
-      // Pick a random CoValue from our initial set
-      const randomIndex = Math.floor(Math.random() * coValueIds.length);
-      const id = coValueIds[randomIndex];
-      const uniqueCounter = counter++;
-      
-      if (mode === "sync") {
-        // For sync mode, wrap in a Promise to maintain consistency in the operations array
-        const updatePromise = Promise.resolve().then(() => {
-          return sqliteAdapter.executeSync(
-            "UPDATE coValues SET header = JSON_SET(header, '$.meta.updated', ?) WHERE id = ?", 
-            [uniqueCounter, id]
-          );
-        });
-        operations.push(updatePromise);
-      } else {
-        const updatePromise = sqliteAdapter.executeAsync(
-          "UPDATE coValues SET header = JSON_SET(header, '$.meta.updated', ?) WHERE id = ?", 
-          [uniqueCounter, id]
-        );
-        operations.push(updatePromise);
-      }
-    }
-    
-    // Wait for all operations to complete
-    await Promise.all(operations);
+
+    // Fire all operations simultaneously
+    // This should create maximum contention on the database
+    await Promise.allSettled(promises);
+
+    // Log the results
+    console.log(`Database flood results: ${successCount} succeeded, ${errorCount} failed`);
+
+    // Return the error count so it can be included in benchmark results
+    return { errorCount, successCount };
   });
 
   return bench;

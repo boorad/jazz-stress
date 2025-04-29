@@ -10,5 +10,13 @@
     ".yalc/jazz-react-native",
     ".yalc/jazz-react-native-core",
     ".yalc/jazz-tools"
-  ]
+  ],
+  "dependencies": {
+    "cojson": "workspace:*",
+    "jazz-expo": "workspace:*",
+    "jazz-react-core": "workspace:*",
+    "jazz-react-native": "workspace:*",
+    "jazz-react-native-core": "workspace:*",
+    "jazz-tools": "workspace:*"
+  }
 }
