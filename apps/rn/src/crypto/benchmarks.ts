@@ -1,5 +1,6 @@
 import { Bench } from 'tinybench';
 import { PureJSCrypto } from 'cojson/dist/crypto/PureJSCrypto';
+// @ts-expect-error - exports are a little funky still
 import { RNQuickCrypto } from 'jazz-react-native/crypto';
 import type { CryptoBenchmarkResult } from 'lib/benchmarks';
 

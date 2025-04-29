@@ -1,4 +1,4 @@
-import { Bench, TaskResult } from "tinybench";
+import { Bench } from "tinybench";
 import type { StorageBenchmarkResult } from "./types";
 
 // Process benchmark results and convert to StorageBenchmarkResult format

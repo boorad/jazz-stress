@@ -4,6 +4,7 @@ import { RNQuickCrypto } from 'jazz-react-native/crypto';
 import { Bench } from 'tinybench';
 import { OPSQLiteAdapter, SQLiteClient } from 'jazz-react-native';
 import { PermissionsDef } from 'cojson/src/permissions.js';
+import { runStorageBenchmarks } from 'lib/benchmarks/storage';
 import type { StorageBenchmarkResult } from 'lib/benchmarks';
 
 const { idforHeader } = cojsonInternals;
@@ -215,13 +216,8 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
 export const runCoValueBenchmarks = async (
   mode: Mode = 'async',
 ): Promise<StorageBenchmarkResult[]> => {
-  console.log('[covalue-benchmarks] start');
-
   // Use the shared runStorageBenchmarks function from lib
-  const results = await runStorageBenchmarks(benches, mode);
-
-  console.log('[covalue-benchmarks] complete all');
-  return results;
+  return runStorageBenchmarks(benches, mode);
 };
 
 // Run a single benchmark by name using shared library function
