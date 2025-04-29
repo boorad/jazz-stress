@@ -53,7 +53,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - OpenSSL-Universal (3.3.2000)
+  - OpenSSL-Universal (3.3.3001)
   - QuickCrypto (1.0.0-beta.14):
     - DoubleConversion
     - glog
@@ -1618,7 +1618,7 @@ DEPENDENCIES:
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroModules (from `../../../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
-  - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
+  - QuickCrypto (from `../../../node_modules/react-native-quick-crypto`)
   - RCT-Folly (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../../../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -1706,7 +1706,7 @@ EXTERNAL SOURCES:
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
   QuickCrypto:
-    :path: "../node_modules/react-native-quick-crypto"
+    :path: "../../../node_modules/react-native-quick-crypto"
   RCT-Folly:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTDeprecation:
@@ -1837,7 +1837,7 @@ SPEC CHECKSUMS:
   hermes-engine: eb4a80f6bf578536c58a44198ec93a30f6e69218
   NitroModules: f23a9c892a1ade7d80cdf8dbc5343d29086c79fd
   op-sqlite: 7ecaedd41684cc6c9f6fa267db0da48cbb11dc90
-  OpenSSL-Universal: b60a3702c9fea8b3145549d421fdb018e53ab7b4
+  OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
   QuickCrypto: e457fb08347cd9807514cefad95337a7664aeabe
   RCT-Folly: 84578c8756030547307e4572ab1947de1685c599
   RCTDeprecation: 7691283dd69fed46f6653d376de6fa83aaad774c

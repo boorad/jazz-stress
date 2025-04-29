@@ -20,7 +20,7 @@
     },
     ".yalc/jazz-expo": {
       "name": "jazz-expo",
-      "version": "0.13.13+d239493d",
+      "version": "0.13.13+ed3900ad",
       "dependencies": {
         "@scure/base": "1.2.1",
         "cojson": "*",
@@ -68,7 +68,7 @@
     },
     ".yalc/jazz-react-native-core": {
       "name": "jazz-react-native-core",
-      "version": "0.13.13+8f6776cf",
+      "version": "0.13.13+61c55498",
       "dependencies": {
         "cojson": "*",
         "cojson-storage": "0.13.13",
@@ -76,7 +76,7 @@
         "jazz-react-core": "*",
         "jazz-tools": "*",
         "react-native-nitro-modules": "0.24.1",
-        "react-native-quick-crypto": "1.0.0-beta.13",
+        "react-native-quick-crypto": "1.0.0-beta.14",
       },
     },
     ".yalc/jazz-tools": {
@@ -2039,7 +2039,7 @@
 
     "react-native-quick-base64": ["react-native-quick-base64@2.1.2", "", { "dependencies": { "base64-js": "^1.5.1" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-xghaXpWdB0ji8OwYyo0fWezRroNxiNFCNFpGUIyE7+qc4gA/IGWnysIG5L0MbdoORv8FkTKUvfd6yCUN5R2VFA=="],
 
-    "react-native-quick-crypto": ["react-native-quick-crypto@1.0.0-beta.13", "", { "dependencies": { "@craftzdog/react-native-buffer": "6.0.5", "events": "3.3.0", "react-native-quick-base64": "2.1.2", "readable-stream": "4.5.2", "string_decoder": "1.3.0", "util": "0.12.5" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-R/ON9sQ2UVeg/PAcbaAUZ3VONUQuLwi2pEmy1F1FHUg6k5cubSt12BXn+gW3Dm1NVM4VpU4gDtKOlQ5R5tV3ng=="],
+    "react-native-quick-crypto": ["react-native-quick-crypto@1.0.0-beta.14", "", { "dependencies": { "@craftzdog/react-native-buffer": "6.0.5", "events": "3.3.0", "react-native-quick-base64": "2.1.2", "readable-stream": "4.5.2", "util": "0.12.5" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-4KYhZoSy7DdxLUiyvHeX0FsvTJ5BENRoXfBieNN03wOs2y3ANBCYqXTOlfRJREMkquIJxVWkSIDDl64iv1jFHw=="],
 
     "react-native-reanimated": ["react-native-reanimated@3.16.7", "", { "dependencies": { "@babel/plugin-transform-arrow-functions": "^7.0.0-0", "@babel/plugin-transform-class-properties": "^7.0.0-0", "@babel/plugin-transform-classes": "^7.0.0-0", "@babel/plugin-transform-nullish-coalescing-operator": "^7.0.0-0", "@babel/plugin-transform-optional-chaining": "^7.0.0-0", "@babel/plugin-transform-shorthand-properties": "^7.0.0-0", "@babel/plugin-transform-template-literals": "^7.0.0-0", "@babel/plugin-transform-unicode-regex": "^7.0.0-0", "@babel/preset-typescript": "^7.16.7", "convert-source-map": "^2.0.0", "invariant": "^2.2.4" }, "peerDependencies": { "@babel/core": "^7.0.0-0", "react": "*", "react-native": "*" } }, "sha512-qoUUQOwE1pHlmQ9cXTJ2MX9FQ9eHllopCLiWOkDkp6CER95ZWeXhJCP4cSm6AD4jigL5jHcZf/SkWrg8ttZUsw=="],
 
@@ -2693,11 +2693,7 @@
 
     "jazzstress-expo/react-dom": ["react-dom@18.3.1", "", { "dependencies": { "loose-envify": "^1.1.0", "scheduler": "^0.23.2" }, "peerDependencies": { "react": "^18.3.1" } }, "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw=="],
 
-    "jazzstress-expo/react-native-quick-crypto": ["react-native-quick-crypto@1.0.0-beta.14", "", { "dependencies": { "@craftzdog/react-native-buffer": "6.0.5", "events": "3.3.0", "react-native-quick-base64": "2.1.2", "readable-stream": "4.5.2", "util": "0.12.5" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-4KYhZoSy7DdxLUiyvHeX0FsvTJ5BENRoXfBieNN03wOs2y3ANBCYqXTOlfRJREMkquIJxVWkSIDDl64iv1jFHw=="],
-
     "jazzstress-rn/@op-engineering/op-sqlite": ["@op-engineering/op-sqlite@11.4.8", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-sZajJaKbaeSavdE5DyR+SaUYZOCeBZ0lvRoA9SC8KY8dFseScoGj4fbEBp9E0IjF3pjEaSpEpewUBg1HqFuaPA=="],
-
-    "jazzstress-rn/react-native-quick-crypto": ["react-native-quick-crypto@1.0.0-beta.14", "", { "dependencies": { "@craftzdog/react-native-buffer": "6.0.5", "events": "3.3.0", "react-native-quick-base64": "2.1.2", "readable-stream": "4.5.2", "util": "0.12.5" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-4KYhZoSy7DdxLUiyvHeX0FsvTJ5BENRoXfBieNN03wOs2y3ANBCYqXTOlfRJREMkquIJxVWkSIDDl64iv1jFHw=="],
 
     "jest-config/babel-jest": ["babel-jest@29.7.0", "", { "dependencies": { "@jest/transform": "^29.7.0", "@types/babel__core": "^7.1.14", "babel-plugin-istanbul": "^6.1.1", "babel-preset-jest": "^29.6.3", "chalk": "^4.0.0", "graceful-fs": "^4.2.9", "slash": "^3.0.0" }, "peerDependencies": { "@babel/core": "^7.8.0" } }, "sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg=="],
 
@@ -2980,10 +2976,6 @@
     "find-cache-dir/pkg-dir/find-up": ["find-up@3.0.0", "", { "dependencies": { "locate-path": "^3.0.0" } }, "sha512-1yD6RmLI1XBfxugvORwlck6f75tYL+iR0jqwsOrOxMZyGYqUuDhJ0l4AXdO1iX/FTs9cBAMEk1gWSEx1kSbylg=="],
 
     "jazzstress-expo/react-dom/scheduler": ["scheduler@0.23.2", "", { "dependencies": { "loose-envify": "^1.1.0" } }, "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ=="],
-
-    "jazzstress-expo/react-native-quick-crypto/readable-stream": ["readable-stream@4.5.2", "", { "dependencies": { "abort-controller": "^3.0.0", "buffer": "^6.0.3", "events": "^3.3.0", "process": "^0.11.10", "string_decoder": "^1.3.0" } }, "sha512-yjavECdqeZ3GLXNgRXgeQEdz9fvDDkNKyHnbHRFtOr7/LcfgBcmct7t/ET+HaCTqfh06OzoAxrkN/IfjJBVe+g=="],
-
-    "jazzstress-rn/react-native-quick-crypto/readable-stream": ["readable-stream@4.5.2", "", { "dependencies": { "abort-controller": "^3.0.0", "buffer": "^6.0.3", "events": "^3.3.0", "process": "^0.11.10", "string_decoder": "^1.3.0" } }, "sha512-yjavECdqeZ3GLXNgRXgeQEdz9fvDDkNKyHnbHRFtOr7/LcfgBcmct7t/ET+HaCTqfh06OzoAxrkN/IfjJBVe+g=="],
 
     "jest-runner/source-map-support/source-map": ["source-map@0.6.1", "", {}, "sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g=="],
 

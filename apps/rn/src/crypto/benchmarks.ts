@@ -1,6 +1,6 @@
-import { Bench, TaskResult } from 'tinybench';
-import { PureJSCrypto } from 'cojson/crypto/PureJSCrypto';
-import { RNQuickCrypto } from 'jazz-react-native-core/crypto';
+import { Bench } from 'tinybench';
+import { PureJSCrypto } from 'cojson/dist/crypto/PureJSCrypto';
+import { RNQuickCrypto } from 'jazz-react-native/crypto';
 import type { CryptoBenchmarkResult } from 'lib/benchmarks';
 
 // Legacy type kept for backward compatibility

@@ -1,10 +1,12 @@
-import { RNQuickCrypto } from 'jazz-react-native-core/crypto';
+import { cojsonInternals } from 'cojson';
+import { CojsonInternalTypes } from 'cojson';
+import { RNQuickCrypto } from 'jazz-react-native/crypto';
 import { Bench } from 'tinybench';
 import { OPSQLiteAdapter, SQLiteClient } from 'jazz-react-native';
-import { CoValueHeader, idforHeader } from 'cojson/dist/coValueCore.js';
-import { PermissionsDef } from 'cojson/dist/permissions.js';
+import { PermissionsDef } from 'cojson/src/permissions.js';
 import type { StorageBenchmarkResult } from 'lib/benchmarks';
-import { runStorageBenchmarks, runSingleStorageBenchmark } from 'lib/benchmarks';
+
+const { idforHeader } = cojsonInternals;
 
 // Reduced benchmark time for quicker feedback
 const TIME_MS = 1000; // 1 second
@@ -32,7 +34,7 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
 // Setup the Jazz environment with SQLite storage
 export const setupJazzEnvironment = async (mode: Mode = 'async') => {
   // Initialize the SQLite adapter with a unique database name to avoid conflicts
-  const dbName = `jazz-stress-benchmark-${mode}-${Date.now()}.db`;
+  const dbName = `jazz-stress-benchmark-${Date.now()}.db`;
   const sqliteAdapter = new OPSQLiteAdapter(dbName);
   const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
   await sqliteClient.ensureInitialized();
@@ -70,7 +72,7 @@ async function covalue_create_benchmark(mode: Mode = 'async') {
 
   bench.add('create-comap', async () => {
     // Build a unique header for this iteration
-    const header: CoValueHeader = {
+    const header: CojsonInternalTypes.CoValueHeader = {
       type: 'comap',
       ruleset: {} as PermissionsDef,
       meta: null,
@@ -95,7 +97,7 @@ async function covalue_create_benchmark(mode: Mode = 'async') {
 async function covalue_read_benchmark(mode: Mode = 'async') {
   const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
 
-  const header: CoValueHeader = {
+  const header: CojsonInternalTypes.CoValueHeader = {
     type: 'comap',
     meta: { createdAt: Date.now() },
     ruleset: {} as PermissionsDef,
@@ -130,7 +132,7 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
   const { sqliteAdapter, sqliteClient, crypto } =
     await setupJazzEnvironment(mode);
   // Insert base CoValue
-  const initialHeader: CoValueHeader = {
+  const initialHeader: CojsonInternalTypes.CoValueHeader = {
     type: 'comap',
     ruleset: {} as PermissionsDef,
     meta: null,
@@ -152,7 +154,7 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
   let counter = 1;
   bench.add('update-header', async () => {
     // Modify header meta
-    const newHeader: CoValueHeader = {
+    const newHeader: CojsonInternalTypes.CoValueHeader = {
       ...initialHeader,
       meta: { updated: counter },
       uniqueness: counter++,
@@ -183,7 +185,7 @@ async function covalue_delete_benchmark(mode: Mode = 'async') {
   });
   let counter = 0;
   bench.add('delete-comap', async () => {
-    const header: CoValueHeader = {
+    const header: CojsonInternalTypes.CoValueHeader = {
       type: 'comap',
       ruleset: {} as PermissionsDef,
       meta: null,
