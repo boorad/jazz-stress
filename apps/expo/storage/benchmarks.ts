@@ -20,6 +20,7 @@ const benches = [
   covalue_read_benchmark,
   covalue_update_benchmark,
   covalue_delete_benchmark,
+  covalue_stress_benchmark,
 ];
 
 // Map benchmark names to functions
@@ -28,6 +29,7 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
   "covalue-read": covalue_read_benchmark,
   "covalue-update": covalue_update_benchmark,
   "covalue-delete": covalue_delete_benchmark,
+  "covalue-stress": covalue_stress_benchmark,
 };
 
 const crypto = new RNQuickCrypto();
@@ -190,6 +192,114 @@ async function covalue_delete_benchmark(mode: Mode = "async") {
       ]);
     }
     counter++;
+  });
+
+  return bench;
+}
+
+// Benchmark for stressing CoValue reads/writes with concurrent operations
+async function covalue_stress_benchmark(mode: Mode = "async") {
+  const { sqliteAdapter, sqliteClient } = await setupJazzEnvironment(
+    getAdapter,
+    mode
+  );
+
+  const bench = new Bench({
+    name: "covalue-stress",
+    time: TIME_MS,
+    warmupTime: WARMUP_MS,
+  });
+
+  // Number of operations to perform in each category
+  const NUM_OPERATIONS = 20;
+  
+  // Create a set of initial CoValues that we'll use for read operations
+  const coValueIds: string[] = [];
+  const numInitialCoValues = NUM_OPERATIONS;
+  
+  for (let i = 0; i < numInitialCoValues; i++) {
+    const header: CoValueHeader = {
+      type: "comap",
+      ruleset: {} as PermissionsDef,
+      meta: { initialId: i },
+      uniqueness: i,
+    };
+    const id = idforHeader(header, crypto);
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: "content",
+      priority: 0,
+      new: {}, // Empty object for new content to avoid type errors
+    });
+    coValueIds.push(id);
+  }
+
+  let counter = numInitialCoValues;
+
+  bench.add("concurrent-operations", async () => {
+    // Create an array of promises for concurrent operations
+    const operations: Promise<any>[] = [];
+    
+    // Add create operations
+    for (let i = 0; i < NUM_OPERATIONS; i++) {
+      const uniqueCounter = counter++;
+      const header: CoValueHeader = {
+        type: "comap",
+        ruleset: {} as PermissionsDef,
+        meta: { createdInBatch: uniqueCounter },
+        uniqueness: uniqueCounter,
+      };
+      const id = idforHeader(header, crypto);
+      
+      const createPromise = sqliteClient.addCoValue({
+        id,
+        header,
+        action: "content",
+        priority: 0,
+        new: {}, // Empty object for new content to avoid type errors
+      });
+      
+      operations.push(createPromise);
+    }
+    
+    // Add read operations for existing CoValues
+    for (let i = 0; i < NUM_OPERATIONS; i++) {
+      // Pick a random CoValue from our initial set
+      const randomIndex = Math.floor(Math.random() * coValueIds.length);
+      // Type assertion to handle the ID format requirement
+      const id = coValueIds[randomIndex] as `co_z${string}`;
+      const readPromise = sqliteClient.getCoValue(id);
+      operations.push(readPromise);
+    }
+    
+    // Add update operations
+    for (let i = 0; i < NUM_OPERATIONS; i++) {
+      // Pick a random CoValue from our initial set
+      const randomIndex = Math.floor(Math.random() * coValueIds.length);
+      const id = coValueIds[randomIndex];
+      const uniqueCounter = counter++;
+      
+      if (mode === "sync") {
+        // For sync mode, wrap in a Promise to maintain consistency in the operations array
+        const updatePromise = Promise.resolve().then(() => {
+          return sqliteAdapter.executeSync(
+            "UPDATE coValues SET header = JSON_SET(header, '$.meta.updated', ?) WHERE id = ?", 
+            [uniqueCounter, id]
+          );
+        });
+        operations.push(updatePromise);
+      } else {
+        const updatePromise = sqliteAdapter.executeAsync(
+          "UPDATE coValues SET header = JSON_SET(header, '$.meta.updated', ?) WHERE id = ?", 
+          [uniqueCounter, id]
+        );
+        operations.push(updatePromise);
+      }
+    }
+    
+    // Wait for all operations to complete
+    await Promise.all(operations);
   });
 
   return bench;
