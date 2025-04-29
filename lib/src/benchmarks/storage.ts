@@ -1,5 +1,31 @@
 import { Bench } from "tinybench";
-import type { StorageBenchmarkResult } from "./types";
+import type { Mode, StorageBenchmarkResult } from "./types";
+import { SQLiteAdapterBase, SQLiteClient } from "jazz-react-native-core";
+
+export async function setupJazzEnvironment(
+  getAdapter: (dbName: string) => SQLiteAdapterBase,
+  mode: Mode = "async"
+) {
+  const dbName = `jazz-rn-benchmark-${mode}-${Date.now()}.db`;
+  const sqliteAdapter = getAdapter(dbName);
+  const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
+  await sqliteClient.ensureInitialized();
+
+  const localNode = {
+    id: `node-${Date.now()}`,
+    storage: {
+      execute: sqliteAdapter.executeSync.bind(sqliteAdapter),
+      transaction: sqliteAdapter.transactionSync.bind(sqliteAdapter),
+    },
+  };
+
+  const account = {
+    id: `account-${Date.now()}`,
+    profile: { name: `Benchmark User ${Date.now()}` },
+  };
+
+  return { localNode, account, sqliteAdapter, sqliteClient };
+}
 
 // Process benchmark results and convert to StorageBenchmarkResult format
 export function processResults(

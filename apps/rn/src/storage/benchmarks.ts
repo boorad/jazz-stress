@@ -4,17 +4,17 @@ import { RNQuickCrypto } from 'jazz-react-native/crypto';
 import { Bench } from 'tinybench';
 import { OPSQLiteAdapter, SQLiteClient } from 'jazz-react-native';
 import { PermissionsDef } from 'cojson/src/permissions.js';
-import { runStorageBenchmarks } from 'lib/benchmarks/storage';
-import type { StorageBenchmarkResult } from 'lib/benchmarks';
+import {
+  runStorageBenchmarks,
+  setupJazzEnvironment,
+} from 'lib/benchmarks';
+import type { Mode, StorageBenchmarkResult } from 'lib/benchmarks';
 
 const { idforHeader } = cojsonInternals;
 
 // Reduced benchmark time for quicker feedback
 const TIME_MS = 1000; // 1 second
 const WARMUP_MS = 200; // 0.2 seconds
-
-// Mode controls sync or async SQLiteClient
-export type Mode = 'async' | 'sync';
 
 // Benchmarks for Jazz coValue operations
 const benches = [
@@ -32,36 +32,15 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
   'covalue-delete': covalue_delete_benchmark,
 };
 
-// Setup the Jazz environment with SQLite storage
-export const setupJazzEnvironment = async (mode: Mode = 'async') => {
-  // Initialize the SQLite adapter with a unique database name to avoid conflicts
-  const dbName = `jazz-stress-benchmark-${Date.now()}.db`;
-  const sqliteAdapter = new OPSQLiteAdapter(dbName);
-  const sqliteClient = new SQLiteClient(sqliteAdapter, [] as any, mode);
-  await sqliteClient.ensureInitialized();
-  const crypto = new RNQuickCrypto();
+const crypto = new RNQuickCrypto();
 
-  // Mock the LocalNode and Account for benchmarking
-  const localNode = {
-    id: `node-${Date.now()}`,
-    storage: {
-      execute: sqliteAdapter.executeSync.bind(sqliteAdapter),
-      transaction: sqliteAdapter.transactionSync.bind(sqliteAdapter),
-    },
-  };
-
-  // Mock account
-  const account = {
-    id: `account-${Date.now()}`,
-    profile: { name: `Benchmark User ${Date.now()}` },
-  };
-
-  return { localNode, account, sqliteAdapter, sqliteClient, crypto };
-};
+function getAdapter(dbName: string) {
+  return new OPSQLiteAdapter(dbName);
+}
 
 // Benchmark for creating coValues
 async function covalue_create_benchmark(mode: Mode = 'async') {
-  const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
+  const { sqliteClient } = await setupJazzEnvironment(getAdapter, mode);
 
   const bench = new Bench({
     name: 'covalue-create',
@@ -96,7 +75,7 @@ async function covalue_create_benchmark(mode: Mode = 'async') {
 
 // Benchmark for getting values from a coValue
 async function covalue_read_benchmark(mode: Mode = 'async') {
-  const { sqliteClient, crypto } = await setupJazzEnvironment(mode);
+  const { sqliteClient } = await setupJazzEnvironment(getAdapter, mode);
 
   const header: CojsonInternalTypes.CoValueHeader = {
     type: 'comap',
@@ -130,8 +109,7 @@ async function covalue_read_benchmark(mode: Mode = 'async') {
 
 // Benchmark for updating CoValue headers
 async function covalue_update_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } =
-    await setupJazzEnvironment(mode);
+  const { sqliteAdapter, sqliteClient } = await setupJazzEnvironment(getAdapter, mode);
   // Insert base CoValue
   const initialHeader: CojsonInternalTypes.CoValueHeader = {
     type: 'comap',
@@ -177,8 +155,7 @@ async function covalue_update_benchmark(mode: Mode = 'async') {
 
 // Benchmark for deleting CoValue entries
 async function covalue_delete_benchmark(mode: Mode = 'async') {
-  const { sqliteAdapter, sqliteClient, crypto } =
-    await setupJazzEnvironment(mode);
+  const { sqliteAdapter, sqliteClient } = await setupJazzEnvironment(getAdapter, mode);
   const bench = new Bench({
     name: 'covalue-delete',
     time: TIME_MS,

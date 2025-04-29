@@ -8,6 +8,7 @@ export {
   processResults,
   runStorageBenchmarks,
   runSingleStorageBenchmark,
+  setupJazzEnvironment,
 } from "./storage";
 
 export type {
@@ -15,4 +16,5 @@ export type {
   CryptoBenchmarkResult,
   StorageBenchmarkResult,
   BenchmarkUtils,
+  Mode,
 } from "./types";

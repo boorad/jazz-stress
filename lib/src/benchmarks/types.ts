@@ -1,5 +1,8 @@
 import { TaskResult } from "tinybench";
 
+// Mode controls sync or async SQLiteClient
+export type Mode = "async" | "sync";
+
 // Generic benchmark result type
 export interface BenchmarkResult {
   name: string;
