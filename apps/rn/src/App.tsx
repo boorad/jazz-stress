@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -6,17 +6,17 @@ import {
   Text,
   TouchableOpacity,
   LogBox,
-} from 'react-native';
-import { BenchmarkProvider, useBenchmark } from 'lib/benchmarks';
-import { CryptoBenchmarks, CoValueBenchmarks } from 'lib/components';
-import { runCryptoBenchmarks, runSingleBenchmark } from './crypto/benchmarks';
+} from "react-native";
+import { BenchmarkProvider, useBenchmark } from "lib/benchmarks";
+import { CryptoBenchmarks, CoValueBenchmarks } from "lib/components";
+import { runCryptoBenchmarks, runSingleBenchmark } from "./crypto/benchmarks";
 import {
   runCoValueBenchmarks,
   runSingleCoValueBenchmark,
-} from './storage/benchmarks';
+} from "./storage/benchmarks";
 
 // Suppress VirtualizedLists nesting warning
-LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
+LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
 
 // Button component that uses the benchmark context
 function RunButton() {
@@ -69,7 +69,7 @@ export function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
   scrollView: {
     flex: 1,
@@ -77,24 +77,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#fff",
+    textAlign: "center",
     marginVertical: 4,
   },
   runButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 6,
     padding: 10,
     marginHorizontal: 10,
     marginVertical: 16,
-    width: '80%',
-    alignSelf: 'center',
+    width: "80%",
+    alignSelf: "center",
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

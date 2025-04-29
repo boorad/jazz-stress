@@ -1,8 +1,8 @@
-import { Bench } from 'tinybench';
-import { PureJSCrypto } from 'cojson/dist/crypto/PureJSCrypto';
+import { Bench } from "tinybench";
+import { PureJSCrypto } from "cojson/dist/crypto/PureJSCrypto";
 // @ts-expect-error - exports are a little funky still
-import { RNQuickCrypto } from 'jazz-react-native/crypto';
-import type { CryptoBenchmarkResult } from 'lib/benchmarks';
+import { RNQuickCrypto } from "jazz-react-native/crypto";
+import type { CryptoBenchmarkResult } from "lib/benchmarks";
 
 // Legacy type kept for backward compatibility
 export type Results = CryptoBenchmarkResult;
@@ -10,7 +10,7 @@ export type Results = CryptoBenchmarkResult;
 const TIME_MS = 1000;
 const WARMUP_MS = 100;
 
-const data = { b: 'world', a: 'hello' };
+const data = { b: "world", a: "hello" };
 
 async function sign_verify(): Promise<Bench> {
   const pure = new PureJSCrypto();
@@ -20,22 +20,22 @@ async function sign_verify(): Promise<Bench> {
   const rnqcSigner = rnqc.newRandomSigner();
 
   const bench = new Bench({
-    name: 'sign-verify',
+    name: "sign-verify",
     time: TIME_MS,
     warmupTime: WARMUP_MS,
   });
 
-  bench.add('pure', () => {
+  bench.add("pure", () => {
     const signature = pure.sign(pureSigner, data);
     if (!pure.verify(signature, data, pure.getSignerID(pureSigner))) {
-      throw new Error('signature did not verify');
+      throw new Error("signature did not verify");
     }
   });
 
-  bench.add('rnqc', () => {
+  bench.add("rnqc", () => {
     const signature = rnqc.sign(rnqcSigner, data);
     if (!rnqc.verify(signature, data, rnqc.getSignerID(rnqcSigner))) {
-      throw new Error('signature did not verify');
+      throw new Error("signature did not verify");
     }
   });
 
@@ -49,7 +49,7 @@ type BenchmarkFunction = () => Promise<Bench>;
 
 // Map of benchmark names to their functions
 export const benchmarkMap: Record<string, BenchmarkFunction> = {
-  'sign-verify': sign_verify,
+  "sign-verify": sign_verify,
   // Add more benchmarks here as they are created
 };
 
@@ -60,8 +60,8 @@ export const runCryptoBenchmarks = async (): Promise<
   for (const benchFn of benches) {
     const bench = await benchFn();
     await bench.run();
-    const pureTask = bench.tasks.find(t => t.name === 'pure');
-    const rnqcTask = bench.tasks.find(t => t.name === 'rnqc');
+    const pureTask = bench.tasks.find(t => t.name === "pure");
+    const rnqcTask = bench.tasks.find(t => t.name === "rnqc");
     results.push({
       name: bench.name,
       pure: pureTask?.result,
@@ -81,7 +81,7 @@ export const runSingleBenchmark = async (
   }
   const bench = await benchFn();
   await bench.run();
-  const pureTask = bench.tasks.find(t => t.name === 'pure');
-  const rnqcTask = bench.tasks.find(t => t.name === 'rnqc');
+  const pureTask = bench.tasks.find(t => t.name === "pure");
+  const rnqcTask = bench.tasks.find(t => t.name === "rnqc");
   return [{ name: bench.name, pure: pureTask?.result, rnqc: rnqcTask?.result }];
 };

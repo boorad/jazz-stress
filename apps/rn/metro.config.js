@@ -1,10 +1,10 @@
-const path = require('path');
-const { makeMetroConfig } = require('@rnx-kit/metro-config');
-const MetroSymlinksResolver = require('@rnx-kit/metro-resolver-symlinks');
+const path = require("path");
+const { makeMetroConfig } = require("@rnx-kit/metro-config");
+const MetroSymlinksResolver = require("@rnx-kit/metro-resolver-symlinks");
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-const libSrc = path.resolve(workspaceRoot, 'lib', 'src');
+const workspaceRoot = path.resolve(projectRoot, "../..");
+const libSrc = path.resolve(workspaceRoot, "lib", "src");
 
 module.exports = makeMetroConfig({
   resolver: {
@@ -13,26 +13,23 @@ module.exports = makeMetroConfig({
       lib: libSrc,
     },
     nodeModulesPaths: [
-      path.resolve(projectRoot, 'node_modules'),
-      path.resolve(workspaceRoot, 'node_modules'),
-      path.resolve(workspaceRoot, '.yalc'),
+      path.resolve(projectRoot, "node_modules"),
+      path.resolve(workspaceRoot, "node_modules"),
+      path.resolve(workspaceRoot, ".yalc"),
     ],
-    sourceExts: ['mjs', 'js', 'json', 'ts', 'tsx'],
+    sourceExts: ["mjs", "js", "json", "ts", "tsx"],
     // Ignore require cycles in node_modules
     requireCycleIgnorePatterns: [
       /(^|\/|\\)node_modules($|\/|\\)/,
-      /(^|\/|\\).yalc($|\/|\\)/
+      /(^|\/|\\).yalc($|\/|\\)/,
     ],
   },
   watchFolders: [
-    path.resolve(workspaceRoot, 'node_modules'),
-    path.resolve(workspaceRoot, '.yalc'),
+    path.resolve(workspaceRoot, "node_modules"),
+    path.resolve(workspaceRoot, ".yalc"),
     libSrc,
   ],
 });
-
-
-
 
 // // Detect Node core modules to skip custom resolution
 // const { builtinModules } = require('module');
@@ -50,4 +47,3 @@ module.exports = makeMetroConfig({
 //   }
 //   return MetroSymlinksResolver()(context, moduleName, platform);
 // };
-
