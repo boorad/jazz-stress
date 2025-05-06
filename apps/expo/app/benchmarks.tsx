@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { BenchmarkProvider, useBenchmark } from "lib/benchmarks";
 import { CryptoBenchmarks, CoValueBenchmarks } from "lib/components";
-import { runCryptoBenchmarks, runSingleBenchmark } from "../crypto/benchmarks";
+import { runCryptoBenchmarks, runSingleCryptoBenchmark } from "../crypto/benchmarks";
 import {
   runCoValueBenchmarks,
   runSingleCoValueBenchmark,
@@ -35,7 +35,7 @@ function BenchmarksScreenContent(): JSX.Element {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <CryptoBenchmarks
           runAll={runCryptoBenchmarks}
-          runSingle={runSingleBenchmark}
+          runSingle={runSingleCryptoBenchmark}
         />
         <CoValueBenchmarks
           library="expo-sqlite"
