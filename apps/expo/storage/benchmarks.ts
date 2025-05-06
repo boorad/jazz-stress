@@ -1,4 +1,3 @@
-
 import { RNQuickCrypto } from "jazz-react-native-core/crypto";
 import { Bench } from "tinybench";
 import { ExpoSQLiteAdapter } from "jazz-expo";
@@ -10,6 +9,13 @@ import {
   setupJazzEnvironment,
 } from "lib/benchmarks";
 import type { Mode, StorageBenchmarkResult } from "lib/benchmarks";
+import { SyncManager } from "cojson-storage";
+import {
+  CojsonInternalTypes,
+  OutgoingSyncQueue,
+  emptyKnownState,
+  SyncMessage,
+} from "cojson";
 
 const TIME_MS = 1000; // 1 second
 const WARMUP_MS = 200; // 0.2 seconds
@@ -21,6 +27,7 @@ const benches = [
   covalue_update_benchmark,
   covalue_delete_benchmark,
   covalue_stress_benchmark,
+  sync_manager_benchmark,
 ];
 
 // Map benchmark names to functions
@@ -30,12 +37,24 @@ export const benchmarkMap: Record<string, (mode: Mode) => Promise<Bench>> = {
   "covalue-update": covalue_update_benchmark,
   "covalue-delete": covalue_delete_benchmark,
   "covalue-stress": covalue_stress_benchmark,
+  "sync-manager": sync_manager_benchmark,
 };
 
 const crypto = new RNQuickCrypto();
 
 function getAdapter(dbName: string) {
   return new ExpoSQLiteAdapter(dbName);
+}
+
+// Mock OutgoingSyncQueue
+class MockOutgoingSyncQueue implements OutgoingSyncQueue {
+  async push(_msg: SyncMessage): Promise<void> {
+    // No-op for benchmarking DB interaction
+    return Promise.resolve();
+  }
+  close(): void {
+    // No-op
+  }
 }
 
 // Benchmark for creating coValues
@@ -211,7 +230,7 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
   });
 
   // Number of operations to perform in each category
-  const NUM_OPERATIONS = 100; // Increased for more stress
+  const NUM_OPERATIONS = 20;
 
   // Create a complex object to use as CoValue content
   // We'll use a simple object structure to avoid type issues
@@ -232,7 +251,7 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
           created: new Date().toISOString(),
           modified: new Date().toISOString(),
           version: i + 1,
-          status: ['active', 'pending', 'archived', 'deleted'][i % 4],
+          status: ["active", "pending", "archived", "deleted"][i % 4],
           tags: Array.from({ length: 5 }, (_, t) => `tag_${t}_${index}`),
           nested: {
             level1: {
@@ -241,13 +260,13 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
                   value: `Deep nested value ${i}`,
                   array: Array.from({ length: 10 }, (_, a) => ({
                     subId: `subitem_${a}`,
-                    subValue: `Value for subitem ${a} in item ${i} for user ${index}`
-                  }))
-                }
-              }
-            }
-          }
-        }
+                    subValue: `Value for subitem ${a} in item ${i} for user ${index}`,
+                  })),
+                },
+              },
+            },
+          },
+        },
       };
     }
 
@@ -287,8 +306,8 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
     let successCount = 0;
 
     // Create a function to execute a single operation and return a promise
-    const executeOperation = (type: 'create' | 'read') => {
-      if (type === 'create') {
+    const executeOperation = (type: "create" | "read") => {
+      if (type === "create") {
         const uniqueCounter = counter++;
         const header: CoValueHeader = {
           type: "comap",
@@ -298,34 +317,37 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
         };
         const id = idforHeader(header, crypto);
 
-        return sqliteClient.addCoValue({
-          id,
-          header,
-          action: "content",
-          priority: 0,
-          new: generateComplexContent(uniqueCounter),
-        }).then(() => {
-          successCount++;
-          return 'success';
-        }).catch(err => {
-          errorCount++;
-          // Uncomment to see errors
-          // console.error(`Create error: ${err.message}`);
-          return 'error';
-        });
-      } else { // read
+        return sqliteClient
+          .addCoValue({
+            id,
+            header,
+            action: "content",
+            priority: 0,
+            new: generateComplexContent(uniqueCounter),
+          })
+          .then(() => {
+            successCount++;
+            return "success";
+          })
+          .catch((err) => {
+            errorCount++;
+            return "error";
+          });
+      } else {
+        // read
         const randomIndex = Math.floor(Math.random() * coValueIds.length);
         const id = coValueIds[randomIndex] as `co_z${string}`;
 
-        return sqliteClient.getCoValue(id).then(() => {
-          successCount++;
-          return 'success';
-        }).catch(err => {
-          errorCount++;
-          // Uncomment to see errors
-          // console.error(`Read error: ${err.message}`);
-          return 'error';
-        });
+        return sqliteClient
+          .getCoValue(id)
+          .then(() => {
+            successCount++;
+            return "success";
+          })
+          .catch((err) => {
+            errorCount++;
+            return "error";
+          });
       }
     };
 
@@ -335,23 +357,77 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
 
     // Add create operations
     for (let i = 0; i < NUM_OPERATIONS; i++) {
-      promises.push(executeOperation('create'));
+      promises.push(executeOperation("create"));
     }
 
     // Add read operations
     for (let i = 0; i < NUM_OPERATIONS; i++) {
-      promises.push(executeOperation('read'));
+      promises.push(executeOperation("read"));
     }
 
     // Fire all operations simultaneously
     // This should create maximum contention on the database
     await Promise.allSettled(promises);
 
-    // Log the results
-    console.log(`Database flood results: ${successCount} succeeded, ${errorCount} failed`);
-
     // Return the error count so it can be included in benchmark results
     return { errorCount, successCount };
+  });
+
+  return bench;
+}
+
+// Benchmark for SyncManager operations
+async function sync_manager_benchmark(
+  mode: Mode = "async",
+  numInitialCoValues: number = 100 // Configurable pre-warm count
+) {
+  const { sqliteClient } = await setupJazzEnvironment(getAdapter, mode);
+  const mockQueue = new MockOutgoingSyncQueue();
+
+  const bench = new Bench({
+    name: `sync-manager (${numInitialCoValues} pre-warmed)`,
+    time: TIME_MS,
+    warmupTime: WARMUP_MS,
+  });
+
+  // Pre-warm the database
+  const coValueIds: `co_z${string}`[] = [];
+  for (let i = 0; i < numInitialCoValues; i++) {
+    const header: CoValueHeader = {
+      type: "comap",
+      ruleset: {} as PermissionsDef,
+      meta: { prewarmIndex: i },
+      uniqueness: `prewarm_${i}`,
+    };
+    const id = idforHeader(header, crypto);
+    await sqliteClient.addCoValue({
+      id,
+      header,
+      action: "content",
+      priority: 0,
+      new: {}, // Fix: Use empty object for initial add
+    });
+    coValueIds.push(id);
+  }
+
+  // Instantiate SyncManager *once* before the benchmark tasks run
+  const syncManager = new SyncManager(sqliteClient, mockQueue);
+  let coValueIndex = 0;
+
+  bench.add("sync-manager", async () => {
+    // Cycle through pre-warmed CoValues for different runs
+    const targetId = coValueIds[coValueIndex % numInitialCoValues];
+    coValueIndex++;
+
+    if (!targetId) {
+      throw new Error("Failed to get pre-warmed CoValue ID for benchmark task");
+    }
+
+    // Simulate a peer asking for this CoValue with no prior knowledge
+    const knownState = emptyKnownState(targetId);
+
+    // Measure the time taken to collect and prepare data for sending
+    await syncManager.sendNewContent(knownState);
   });
 
   return bench;
@@ -361,7 +437,6 @@ async function covalue_stress_benchmark(mode: Mode = "async") {
 export const runCoValueBenchmarks = async (
   mode: Mode = "async"
 ): Promise<StorageBenchmarkResult[]> => {
-  // Use the shared runStorageBenchmarks function from lib
   return runStorageBenchmarks(benches, mode);
 };
 
@@ -370,6 +445,5 @@ export const runSingleCoValueBenchmark = async (
   benchmarkName: string,
   mode: Mode = "async"
 ): Promise<StorageBenchmarkResult[]> => {
-  // Use the shared runSingleStorageBenchmark function from lib
   return runSingleStorageBenchmark(benchmarkMap, benchmarkName, mode);
 };
