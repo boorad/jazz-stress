@@ -1,67 +1,22 @@
 {
-  "name": "jazzstress",
-  "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
-    "lint": "eslint .",
-    "start": "react-native start",
-    "test": "jest",
-    "clean": "del-cli android/build android/app/build ios/build ios/Pods",
-    "pods": "RCT_NEW_ARCH_ENABLED=1 bundle exec pod install --project-directory=ios"
-  },
-  "dependencies": {
-    "@bacons/text-decoder": "^0.0.0",
-    "@react-native-community/netinfo": "^11.4.1",
-    "buffer": "^6.0.3",
-    "cojson": "workspace:*",
-    "event-target-polyfill": "^0.0.4",
-    "jazz-react-native": "workspace:*",
-    "react": "18.3.1",
-    "react-native": "0.76.5",
-    "react-native-get-random-values": "^1.11.0",
-    "react-native-nitro-modules": "0.18.2",
-    "react-native-quick-crypto": "workspace:*",
-    "safe-stable-stringify": "^2.5.0",
-    "tinybench": "^3.0.7"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.3",
-    "@babel/runtime": "7.25.0",
-    "@react-native-community/cli": "15.0.1",
-    "@react-native-community/cli-platform-android": "15.0.1",
-    "@react-native-community/cli-platform-ios": "15.0.1",
-    "@react-native/babel-preset": "0.76.4",
-    "@react-native/eslint-config": "0.76.4",
-    "@react-native/metro-config": "0.76.4",
-    "@react-native/typescript-config": "0.76.4",
-    "@types/react": "^18.2.6",
-    "@types/react-test-renderer": "^18.0.0",
-    "babel-jest": "^29.6.3",
-    "del-cli": "^6.0.0",
-    "eslint": "^8.19.0",
-    "jest": "^29.6.3",
-    "prettier": "2.8.8",
-    "react-test-renderer": "18.3.1",
-    "typescript": "5.0.4"
-  },
-  "engines": {
-    "node": ">=18"
-  },
+  "name": "jazzstress-mono",
   "workspaces": [
-    ".",
-    "../jazz/packages/*",
-    "../rnqc/main/packages/*"
+    "apps/expo",
+    "apps/rn",
+    "lib",
+    ".yalc/cojson",
+    ".yalc/jazz-expo",
+    ".yalc/jazz-react-core",
+    ".yalc/jazz-react-native",
+    ".yalc/jazz-react-native-core",
+    ".yalc/jazz-tools"
   ],
-  "trustedDependencies": [
-    "@parcel/watcher",
-    "@sveltejs/kit",
-    "better-sqlite3",
-    "edgedriver",
-    "esbuild",
-    "geckodriver",
-    "react-native-nitro-modules"
-  ]
+  "dependencies": {
+    "cojson": "workspace:*",
+    "jazz-expo": "workspace:*",
+    "jazz-react-core": "workspace:*",
+    "jazz-react-native": "workspace:*",
+    "jazz-react-native-core": "workspace:*",
+    "jazz-tools": "workspace:*"
+  }
 }
